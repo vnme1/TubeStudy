@@ -221,9 +221,11 @@
             const progressText = isCompleted ? '강의 완료' : `${course.percentage}%`;
             const thumbnailUrl = `https://img.youtube.com/vi/${course.videoId}/mqdefault.jpg`;
 
+            // data-videoid 속성을 추가하여 이 버튼이 어떤 비디오를 삭제할지 알게 합니다.
             return `
-                <a href="${course.continueWatchUrl}" target="_blank" class="block">
-                    <div class="bg-[#1f1f1f] p-4 rounded-lg flex items-center gap-4 border border-[#272727] hover:bg-[#272727] transition group">
+                <div class="bg-[#1f1f1f] p-4 rounded-lg flex items-center gap-4 border border-[#272727] hover:bg-[#272727] transition group relative">
+                    
+                    <a href="${course.continueWatchUrl}" target="_blank" class="flex-1 flex items-center gap-4">
                         <div class="w-32 thumbnail-card bg-gray-800 rounded relative overflow-hidden flex-shrink-0">
                             <img src="${thumbnailUrl}" class="w-full h-full object-cover" alt="Thumbnail">
                             <div class="absolute bottom-0 w-full h-1 bg-gray-600">
@@ -238,11 +240,20 @@
                                 <span>마지막 학습: ${course.lastProgressTimeAgo}</span>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <div class="text-xl font-bold ${isCompleted ? 'text-green-500' : 'text-red-500'}">${progressText}</div>
-                        </div>
+                    </a>
+                    
+                    <div class="text-right flex items-center gap-4 flex-shrink-0">
+                        <div class="text-xl font-bold ${isCompleted ? 'text-green-500' : 'text-red-500'}">${progressText}</div>
+                        
+                        <button 
+                            class="delete-button text-gray-500 hover:text-red-600 transition p-2 rounded-full hover:bg-gray-700"
+                            data-videoid="${course.videoId}"
+                            data-title="${course.title}"
+                            title="기록 삭제">
+                            <i class="fas fa-trash-alt text-lg"></i>
+                        </button>
                     </div>
-                </a>
+                </div>
             `;
         }
         
@@ -361,6 +372,60 @@
             });
         }
 
+        // =========================================================
+        // 5. 기록 삭제 기능
+        // =========================================================
+
+        async function deleteVideo(videoId, videoTitle) {
+            if (!confirm(`'${videoTitle}' 영상의 모든 학습 기록을 삭제하시겠습니까?`)) {
+                return; // 사용자가 취소함
+            }
+            
+            const DELETE_API_URL = `http://localhost:8085/api/tracker/video/${videoId}`;
+            
+            try {
+                const response = await fetch(DELETE_API_URL, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 204) {
+                    alert(`'${videoTitle}' 기록이 성공적으로 삭제되었습니다.`);
+                    
+                    // 삭제 후 대시보드 데이터를 새로고침
+                    fetchAndRenderCourses();
+                    fetchAndRenderStats(document.getElementById('period-selector').value); // 현재 필터 기준으로 통계 새로고침
+                    fetchAndRenderDashboardData(); // Continue Watching도 새로고침
+
+                } else {
+                    throw new Error(`삭제 실패: HTTP Status ${response.status}`);
+                }
+            } catch (error) {
+                console.error("삭제 중 오류 발생:", error);
+                alert(`기록 삭제 중 오류가 발생했습니다. 서버 상태를 확인하세요. (${error.message})`);
+            }
+        }
+
+        function setupDeleteButtons() {
+            const container = document.getElementById('course-list-container');
+            
+            // 코스 목록 컨테이너에 이벤트 위임 (동적으로 생성되는 버튼에 이벤트 리스너를 붙이기 위함)
+            container.addEventListener('click', (event) => {
+                // 클릭된 요소 또는 그 부모 요소 중에서 'delete-button' 클래스를 찾습니다.
+                const button = event.target.closest('.delete-button');
+                
+                if (button) {
+                    const videoId = button.dataset.videoid;
+                    const videoTitle = button.dataset.title;
+                    if (videoId) {
+                        deleteVideo(videoId, videoTitle);
+                    }
+                }
+            });
+        }
+
 
         // 페이지 로드 시 모든 함수 실행
         fetchAndRenderDashboardData();
@@ -368,6 +433,7 @@
         fetchAndRenderStats(); // 초기 로드 시 'all' (기본값)으로 호출
         setupSidebarNavigation(); 
         setupPeriodFiltering(); // 기간 필터링 설정 함수 호출
+        setupDeleteButtons(); // 삭제 버튼 이벤트 설정 함수 호출 추가
         
     </script>
 </body>
