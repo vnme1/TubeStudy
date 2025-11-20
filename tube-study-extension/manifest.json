@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "TubeStudy Tracker",
+  "version": "1.0",
+  "description": "유튜브 학습 진도율 자동 추적기",
+  "permissions": [
+    "activeTab",
+    "scripting" 
+  ],
+  "host_permissions": [
+    "http://localhost:8085/*" 
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
