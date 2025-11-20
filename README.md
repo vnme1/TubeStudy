@@ -109,6 +109,7 @@ java -jar target/tracker-0.0.1-SNAPSHOT.jar
   → Chrome 알림 표시
 * 학습 현황·통계를 보려면
   → **[http://localhost:8085](http://localhost:8085)** 접속
+<img width="1899" height="1556" alt="image" src="https://github.com/user-attachments/assets/bb84b92a-efaf-450f-a888-6cac016faf37" />
 
 ---
 
