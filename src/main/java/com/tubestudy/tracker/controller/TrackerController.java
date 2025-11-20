@@ -8,18 +8,46 @@ import lombok.RequiredArgsConstructor;
 import com.tubestudy.tracker.dto.SyncResponseDto;
 import org.springframework.web.bind.annotation.*;
 import com.tubestudy.tracker.dto.CourseItemDto;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tracker")
 @CrossOrigin(origins = "*")
-@RequiredArgsConstructor // final 필드(service)를 자동으로 주입
+@RequiredArgsConstructor
 public class TrackerController {
 
-    private final TrackerService trackerService; // 서비스 주입
+    private final TrackerService trackerService;
 
     // ********************************************
-    // 코스 목록 조회 API (새로 추가)
+    // 통계 정보 조회 API (기간 필터링 적용) - 1단계 수정
+    // ********************************************
+    @GetMapping("/dashboard/stats")
+    public DashboardStatsDto getDashboardStats(
+            @RequestParam(defaultValue = "all") String periodType) { // ✅ @RequestParam 추가
+
+        // Service 메서드에 periodType을 전달
+        return trackerService.getDashboardStats(periodType);
+    }
+
+    // ********************************************
+    // 기록 삭제 API - 2단계 기능 추가 (미리 구현)
+    // ********************************************
+    /**
+     * 특정 videoId에 해당하는 모든 시청 기록을 삭제합니다.
+     * 
+     * @param videoId 삭제할 영상의 ID
+     * @return 삭제 성공 응답
+     */
+    @DeleteMapping("/video/{videoId}")
+    public ResponseEntity<Void> deleteVideoProgress(@PathVariable String videoId) { // ✅ 새로 추가
+        trackerService.deleteVideoProgress(videoId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content 반환
+    }
+
+    // ********************************************
+    // 기존 기능 유지
     // ********************************************
 
     @GetMapping("/dashboard/courses")
@@ -27,25 +55,15 @@ public class TrackerController {
         return trackerService.getAllCourseItems();
     }
 
-    @GetMapping("/dashboard/stats") // 통계 정보 조회 API (새로 추가)
-    public DashboardStatsDto getDashboardStats() {
-        return trackerService.getDashboardStats();
-    }
-
     @PostMapping("/sync")
     public SyncResponseDto syncProgress(@RequestBody VideoProgressDto dto) {
-        // 기존 DB 저장 로직 대신, 새로운 저장 및 응답 생성 로직 호출
         SyncResponseDto response = trackerService.saveAndGenerateResponse(dto);
-
-        // 어떤 응답이 익스텐션으로 가는지 콘솔로 확인
         System.out.println("[SYNC RESPONSE] 알림 필요 여부: " + response.isRequiresNotification());
-
-        return response; // 익스텐션으로 응답 전달
+        return response;
     }
 
     @GetMapping("/dashboard/continue")
     public ContinueWatchingDto getContinueWatchingData() {
-        // 서비스에서 데이터를 조회하여 바로 JSON 형태로 반환합니다.
         return trackerService.getContinueWatchingData();
     }
 }

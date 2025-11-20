@@ -221,36 +221,49 @@ public class TrackerService {
     // ********************************************
     // 통계 계산 API 로직
     // ********************************************
-
     @Transactional(readOnly = true)
-    public DashboardStatsDto getDashboardStats() {
-        List<VideoProgress> allVideos = repository.findAll();
+    public DashboardStatsDto getDashboardStats(String periodType) { // ✅ periodType 매개변수 추가
 
-        // 1. 총 학습 시간 계산 및 과목별 누적 시간 계산
+        // 1. 조회 기간 결정
+        // periodType을 기반으로 시작 시간과 종료 시간을 계산합니다.
+        LocalDateTime[] range = calculateTimeRange(periodType);
+        LocalDateTime startDate = range[0];
+        LocalDateTime endDate = range[1];
 
-        // 루프 전에 final 변수를 선언할 필요가 없습니다.
-        double totalStudySeconds = 0; // double totalStudySeconds = 0; 은 그대로 둡니다.
+        List<VideoProgress> allVideos;
+        if (startDate != null) {
+            // 기간이 설정되면 새로운 Repository 메서드 사용
+            allVideos = repository.findByLastSyncedAtBetween(startDate, endDate);
+        } else {
+            // "all" 또는 잘못된 값이 들어오면 기존대로 전체 조회
+            allVideos = repository.findAll();
+        }
+
+        // 2. 총 학습 시간 계산 및 과목별 누적 시간 계산
+        double totalStudySeconds = 0;
         Map<String, Double> subjectAccumulatedSeconds = new HashMap<>();
 
         for (VideoProgress video : allVideos) {
-            // ... (이 부분의 기존 로직 유지)
+            // 여기서는 영상의 최종 진도(LastProgressSeconds)를 학습 시간으로 간주합니다.
+            // (주의: 실제로는 누적 학습 시간(StudyTimeSeconds)을 쓰는 것이 더 정확하나, 현재는 LastProgressSeconds로
+            // 통계 계산 중)
             double studyTimeForVideo = video.getLastProgressSeconds();
-            totalStudySeconds += studyTimeForVideo; // 이 루프 안에서 totalStudySeconds가 변경됩니다.
+            totalStudySeconds += studyTimeForVideo;
 
-            // ... (과목 분류 로직 유지)
+            // 과목 분류
             String subject = classifySubject(video.getTitle());
             subjectAccumulatedSeconds.merge(subject, studyTimeForVideo, Double::sum);
         }
 
-        final double finalTotalStudySeconds = totalStudySeconds; // 에러 방지를 위해 이 줄을 추가합니다.
+        final double finalTotalStudySeconds = totalStudySeconds;
 
-        // 2. 과목 분포 퍼센트 계산
+        // 3. 과목 분포 퍼센트 계산
         List<DashboardStatsDto.SubjectStatDto> subjectStats = subjectAccumulatedSeconds.entrySet().stream()
                 .map(entry -> {
                     String subjectName = entry.getKey();
                     double seconds = entry.getValue();
-                    // 수정: totalStudySeconds 대신 finalTotalStudySeconds를 사용합니다.
-                    double percentage = (seconds / finalTotalStudySeconds) * 100;
+                    // 총 시간이 0이면 나누기 오류를 방지합니다.
+                    double percentage = (finalTotalStudySeconds > 0) ? (seconds / finalTotalStudySeconds) * 100 : 0;
                     String color = getSubjectColor(subjectName);
 
                     return DashboardStatsDto.SubjectStatDto.builder()
@@ -262,7 +275,7 @@ public class TrackerService {
                 .sorted(Comparator.comparing(DashboardStatsDto.SubjectStatDto::getPercentage).reversed())
                 .collect(Collectors.toList());
 
-        // 3. 포맷팅 및 DTO 완성
+        // 4. 포맷팅 및 DTO 완성
         String formattedTime = formatTotalSeconds(totalStudySeconds);
 
         return DashboardStatsDto.builder()
@@ -318,5 +331,47 @@ public class TrackerService {
         } else {
             return String.format("%d분", minutes);
         }
+    }
+
+    /**
+     * 기간 유형에 따른 시작 시간과 종료 시간을 계산합니다.
+     * 
+     * @param periodType "today", "week", "month", "all"
+     * @return [startDate, endDate] 배열 (startDate가 null이면 전체)
+     */
+    private LocalDateTime[] calculateTimeRange(String periodType) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = now;
+
+        switch (periodType.toLowerCase()) {
+            case "today":
+                startDate = now.truncatedTo(ChronoUnit.DAYS); // 오늘 00:00:00
+                break;
+            case "week":
+                // 이번 주 월요일 00:00:00 (LocalDate를 사용한 후 다시 LocalDateTime으로 변환)
+                startDate = now.toLocalDate().with(java.time.DayOfWeek.MONDAY).atStartOfDay();
+                break;
+            case "month":
+                startDate = now.toLocalDate().withDayOfMonth(1).atStartOfDay(); // 이번 달 1일 00:00:00
+                break;
+            case "all":
+            default:
+                // startDate = null; (전체 조회, 기본값)
+                break;
+        }
+
+        return new LocalDateTime[] { startDate, endDate };
+    }
+
+    /**
+     * [2단계 기능] 특정 videoId에 해당하는 모든 시청 기록을 삭제합니다.
+     * 
+     * @param videoId 삭제할 영상의 ID
+     */
+    @Transactional // ✅ 데이터 변경이 발생하므로 @Transactional 어노테이션 필수
+    public void deleteVideoProgress(String videoId) {
+        // Repository에서 videoId를 기준으로 모든 기록을 찾아 삭제합니다.
+        repository.deleteByVideoId(videoId);
     }
 }

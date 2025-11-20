@@ -122,6 +122,14 @@
                 <div id="stats-section" class="lg:col-span-1 space-y-6"> 
                     
                     <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+                        <div class="mb-4">
+                            <select id="period-selector" class="bg-[#1f1f1f] border border-[#3f3f3f] text-sm rounded-lg p-2.5 text-white focus:ring-red-500 focus:border-red-500">
+                                <option value="all">전체 누적</option>
+                                <option value="today">오늘</option>
+                                <option value="week">이번 주</option>
+                                <option value="month">이번 달</option>
+                            </select>
+                        </div>
                         <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">Weekly Study Time (Total)</h3>
                         <div class="flex items-end gap-2 mb-2">
                             <span id="total-study-time" class="text-2xl font-black text-white">00시간 00분</span>
@@ -274,9 +282,14 @@
             `;
         }
 
-        async function fetchAndRenderStats() {
+        async function fetchAndRenderStats(periodType = 'all') { 
+            const url = `${STATS_API_URL}?periodType=${periodType}`;
             try {
-                const response = await fetch(STATS_API_URL);
+                // 로딩 상태 표시 (선택적으로 추가)
+                document.getElementById('total-study-time').innerText = '...';
+                document.getElementById('subject-distribution-list').innerHTML = '<p class="text-gray-500">로딩 중...</p>';
+
+                const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const stats = await response.json();
 
@@ -293,7 +306,7 @@
                 if (stats.subjectStats && stats.subjectStats.length > 0) {
                     listContainer.innerHTML = stats.subjectStats.map(createSubjectListItem).join('');
                 } else {
-                    listContainer.innerHTML = '<p class="text-gray-500">시청 기록이 부족합니다.</p>';
+                    listContainer.innerHTML = '<p class="text-gray-500">조회된 학습 기록이 없습니다.</p>';
                 }
 
             } catch (error) {
@@ -338,12 +351,23 @@
             });
         }
 
+        function setupPeriodFiltering() {
+            const selector = document.getElementById('period-selector');
+            
+            // 드롭다운 변경 시 이벤트 리스너
+            selector.addEventListener('change', (event) => {
+                const selectedPeriod = event.target.value;
+                fetchAndRenderStats(selectedPeriod); // 선택된 기간으로 통계 API 재호출
+            });
+        }
+
 
         // 페이지 로드 시 모든 함수 실행
         fetchAndRenderDashboardData();
         fetchAndRenderCourses();
-        fetchAndRenderStats(); 
-        setupSidebarNavigation(); // 사이드바 기능 설정 함수 호출
+        fetchAndRenderStats(); // 초기 로드 시 'all' (기본값)으로 호출
+        setupSidebarNavigation(); 
+        setupPeriodFiltering(); // 기간 필터링 설정 함수 호출
         
     </script>
 </body>
