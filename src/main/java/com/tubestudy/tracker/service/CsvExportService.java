@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -17,10 +18,11 @@ public class CsvExportService {
     private final VideoProgressRepository videoProgressRepository;
 
     /**
-     * 모든 학습 기록을 CSV 형식으로 내보냅니다.
+     * 모든 학습 기록을 CSV 형식으로 내보냅니다. (UTF-8 BOM 포함)
+     * Excel에서 한글이 깨지지 않도록 BOM을 추가합니다.
      */
     @Transactional(readOnly = true)
-    public String exportStudyRecordsAsCsv() throws IOException {
+    public byte[] exportStudyRecordsAsCsv() throws IOException {
         List<VideoProgress> records = videoProgressRepository.findAll();
 
         StringWriter stringWriter = new StringWriter();
@@ -42,7 +44,15 @@ public class CsvExportService {
                     .append("\n");
         }
 
-        return stringWriter.toString();
+        // UTF-8 BOM 추가 (Excel에서 한글 인식)
+        byte[] bom = new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+        byte[] content = stringWriter.toString().getBytes(StandardCharsets.UTF_8);
+        
+        byte[] result = new byte[bom.length + content.length];
+        System.arraycopy(bom, 0, result, 0, bom.length);
+        System.arraycopy(content, 0, result, bom.length, content.length);
+        
+        return result;
     }
 
     /**
