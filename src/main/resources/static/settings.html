@@ -312,6 +312,73 @@
           </div>
         </section>
 
+        <!-- 딴짓 키워드 커스터마이징 -->
+        <section class="mb-10 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
+            🎯 딴짓 키워드 설정
+          </h2>
+
+          <div class="bg-[#1f1f1f] p-8 rounded-xl shadow-lg border border-[#272727] space-y-6">
+            <!-- 새 키워드 추가 폼 -->
+            <div class="pb-6 border-b border-[#3f3f3f]">
+              <h3 class="text-lg font-semibold mb-4 text-gray-300">➕ 새 키워드 추가</h3>
+              <form id="add-keyword-form" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label for="keyword-input" class="block text-sm font-medium text-gray-300 mb-2">
+                      키워드
+                    </label>
+                    <input
+                      type="text"
+                      id="keyword-input"
+                      placeholder="예: 쇼핑"
+                      required
+                      class="w-full p-2 bg-[#0f0f0f] border border-[#3f3f3f] rounded-lg text-white placeholder-gray-500 focus:border-red-600 focus:ring-red-600 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label for="category-input" class="block text-sm font-medium text-gray-300 mb-2">
+                      카테고리
+                    </label>
+                    <input
+                      type="text"
+                      id="category-input"
+                      placeholder="예: Entertainment"
+                      class="w-full p-2 bg-[#0f0f0f] border border-[#3f3f3f] rounded-lg text-white placeholder-gray-500 focus:border-red-600 focus:ring-red-600 outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label for="alert-message-input" class="block text-sm font-medium text-gray-300 mb-2">
+                    알림 메시지
+                  </label>
+                  <input
+                    type="text"
+                    id="alert-message-input"
+                    placeholder="예: 지금은 공부 시간입니다!"
+                    required
+                    class="w-full p-2 bg-[#0f0f0f] border border-[#3f3f3f] rounded-lg text-white placeholder-gray-500 focus:border-red-600 focus:ring-red-600 outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition duration-200"
+                >
+                  <i class="fas fa-plus mr-2"></i> 키워드 추가
+                </button>
+              </form>
+            </div>
+
+            <!-- 키워드 목록 -->
+            <div>
+              <h3 class="text-lg font-semibold mb-4 text-gray-300">📋 현재 키워드 목록</h3>
+              <div id="keywords-list" class="space-y-3">
+                <p class="text-gray-500 text-sm">로딩 중...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 버전 정보 -->
         <section class="max-w-2xl">
           <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727] text-center text-gray-500 text-sm">
@@ -334,6 +401,11 @@
       const achievementAlert = document.getElementById('achievement-alert');
       const exportButton = document.getElementById('export-button');
       const clearButton = document.getElementById('clear-button');
+      const addKeywordForm = document.getElementById('add-keyword-form');
+      const keywordsList = document.getElementById('keywords-list');
+      const keywordInput = document.getElementById('keyword-input');
+      const categoryInput = document.getElementById('category-input');
+      const alertMessageInput = document.getElementById('alert-message-input');
 
       // 메시지 표시 헬퍼 함수
       function showMessage(text, isSuccess = true) {
@@ -717,6 +789,181 @@
         updateStudyStreak();
         updateAnalytics();
       }, 10000);
+
+      // =========================================================
+      // 11. 딴짓 키워드 관리 기능
+      // =========================================================
+      const KEYWORDS_API_URL = 'http://localhost:18085/api/settings/keywords';
+
+      /**
+       * 키워드 목록 불러오기 및 표시
+       */
+      async function loadKeywords() {
+        try {
+          const response = await fetch(`${KEYWORDS_API_URL}/all`);
+          if (!response.ok) throw new Error('키워드 로드 실패');
+
+          const keywords = await response.json();
+          keywordsList.innerHTML = '';
+
+          if (keywords.length === 0) {
+            keywordsList.innerHTML = '<p class="text-gray-500 text-sm">등록된 키워드가 없습니다.</p>';
+            return;
+          }
+
+          keywords.forEach(keyword => {
+            const isDefault = !keyword.isCustom;
+            const keywordItem = document.createElement('div');
+            keywordItem.className = 'flex items-center justify-between p-4 bg-[#0f0f0f] rounded-lg border border-[#3f3f3f]';
+            keywordItem.innerHTML = `
+              <div class="flex-1">
+                <div class="flex items-center gap-3">
+                  <span class="font-semibold text-white">"${keyword.keyword}"</span>
+                  <span class="text-xs px-2 py-1 rounded-full ${keyword.isCustom ? 'bg-blue-900 text-blue-300' : 'bg-gray-700 text-gray-300'}">
+                    ${keyword.isCustom ? '커스텀' : '기본'}
+                  </span>
+                  <span class="text-xs text-gray-500">${keyword.category || '-'}</span>
+                </div>
+                <p class="text-sm text-gray-400 mt-1">📢 ${keyword.alertMessage}</p>
+              </div>
+              <div class="flex items-center gap-2 ml-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="sr-only peer keyword-toggle"
+                    ${keyword.isActive ? 'checked' : ''}
+                    data-id="${keyword.id}"
+                  />
+                  <div class="w-10 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                </label>
+                ${keyword.isCustom ? `
+                  <button
+                    class="delete-keyword-btn p-2 text-red-500 hover:text-red-400 transition"
+                    data-id="${keyword.id}"
+                    title="삭제"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                ` : ''}
+              </div>
+            `;
+
+            keywordsList.appendChild(keywordItem);
+          });
+
+          // 토글 이벤트 추가
+          document.querySelectorAll('.keyword-toggle').forEach(toggle => {
+            toggle.addEventListener('change', async (e) => {
+              const keywordId = e.target.dataset.id;
+              await toggleKeywordActive(keywordId);
+            });
+          });
+
+          // 삭제 버튼 이벤트 추가
+          document.querySelectorAll('.delete-keyword-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const keywordId = e.currentTarget.dataset.id;
+              if (confirm('이 키워드를 삭제하시겠습니까?')) {
+                await deleteKeyword(keywordId);
+              }
+            });
+          });
+        } catch (error) {
+          console.error('키워드 로드 실패:', error);
+          keywordsList.innerHTML = '<p class="text-red-500 text-sm">키워드를 로드할 수 없습니다.</p>';
+        }
+      }
+
+      /**
+       * 새 키워드 추가
+       */
+      addKeywordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const newKeyword = {
+          keyword: keywordInput.value.trim(),
+          category: categoryInput.value.trim() || 'Custom',
+          alertMessage: alertMessageInput.value.trim(),
+          isActive: true,
+          isCustom: true
+        };
+
+        if (!newKeyword.keyword || !newKeyword.alertMessage) {
+          showMessage('키워드와 알림 메시지를 입력해주세요.', false);
+          return;
+        }
+
+        try {
+          const response = await fetch(KEYWORDS_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newKeyword)
+          });
+
+          if (!response.ok) throw new Error('키워드 추가 실패');
+
+          showMessage('✅ 새 키워드가 추가되었습니다.', true);
+          
+          // 폼 초기화
+          addKeywordForm.reset();
+          
+          // 키워드 목록 새로고침
+          loadKeywords();
+        } catch (error) {
+          console.error('키워드 추가 실패:', error);
+          showMessage('❌ 키워드 추가 중 오류가 발생했습니다.', false);
+        }
+      });
+
+      /**
+       * 키워드 활성화/비활성화 토글
+       */
+      async function toggleKeywordActive(keywordId) {
+        try {
+          const response = await fetch(`${KEYWORDS_API_URL}/${keywordId}/toggle`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) throw new Error('토글 실패');
+
+          showMessage('✅ 키워드 설정이 변경되었습니다.', true);
+          loadKeywords();
+        } catch (error) {
+          console.error('토글 실패:', error);
+          showMessage('❌ 설정 변경 중 오류가 발생했습니다.', false);
+          loadKeywords(); // 롤백
+        }
+      }
+
+      /**
+       * 키워드 삭제
+       */
+      async function deleteKeyword(keywordId) {
+        try {
+          const response = await fetch(`${KEYWORDS_API_URL}/${keywordId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!response.ok) throw new Error('삭제 실패');
+
+          showMessage('✅ 키워드가 삭제되었습니다.', true);
+          loadKeywords();
+        } catch (error) {
+          console.error('삭제 실패:', error);
+          showMessage('❌ 삭제 중 오류가 발생했습니다.', false);
+        }
+      }
+
+      // 페이지 로드 시 키워드 목록 불러오기
+      loadKeywords();
     </script>
   </body>
 </html>

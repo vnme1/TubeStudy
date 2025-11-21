@@ -12,6 +12,7 @@ import com.tubestudy.tracker.entity.VideoProgress;
 import com.tubestudy.tracker.entity.StudyStreak;
 import com.tubestudy.tracker.repository.VideoProgressRepository;
 import com.tubestudy.tracker.repository.StudyStreakRepository;
+import com.tubestudy.tracker.repository.DistractionKeywordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +24,9 @@ import java.util.Optional;
 import java.util.Comparator;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
-import java.time.DayOfWeek;
 import java.time.temporal.ChronoUnit;
 // import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +35,7 @@ public class TrackerService {
     private final VideoProgressRepository repository;
     private final StudyStreakRepository studyStreakRepository;
     private final SettingsService settingsService;
+    private final DistractionKeywordRepository distractionKeywordRepository;
 
     // ========================================================
     // [Core Logic] 1. 동기화 및 기록 저장/응답
@@ -145,7 +145,7 @@ public class TrackerService {
 
     /**
      * 영상 제목을 분석하여 딴짓 여부를 판단하는 로직
-     * 영문 및 한글 키워드 모두 지원
+     * DB에 저장된 활성화된 키워드를 사용합니다.
      * 
      * @param title 영상 제목
      * @return 딴짓 알림 메시지 (딴짓이 아니면 null)
@@ -153,22 +153,15 @@ public class TrackerService {
     private String analyzeDistraction(String title) {
         String lowerTitle = title.toLowerCase();
 
-        // Vlog/브이로그/먹방 관련
-        if (lowerTitle.contains("vlog") || lowerTitle.contains("브이로그") ||
-                lowerTitle.contains("먹방") || lowerTitle.contains("브이로그 혹은 음식")) {
-            return "Vlog는 잠시 후에! 지금은 공부할 시간입니다. 집중하세요! 👀";
-        }
+        // DB에서 활성화된 키워드 조회
+        List<com.tubestudy.tracker.entity.DistractionKeyword> activeKeywords = distractionKeywordRepository
+                .findAllByIsActiveTrue();
 
-        // 게임/게임플레이 관련
-        if (lowerTitle.contains("게임") || lowerTitle.contains("game play") ||
-                lowerTitle.contains("게임플레이") || lowerTitle.contains("gameplay")) {
-            return "게임을 유혹을 참아내고 다시 강의로 돌아오세요. 🕹️";
-        }
-
-        // ASMR/예능 관련
-        if (lowerTitle.contains("asmr") || lowerTitle.contains("예능") ||
-                lowerTitle.contains("예술") || lowerTitle.contains("엔터테인먼트")) {
-            return "휴식 시간에는 좋습니다. 하지만 지금은 강의를 시청 중인 것 같아요! 🎧";
+        // 각 키워드에 대해 제목에 포함되는지 확인
+        for (com.tubestudy.tracker.entity.DistractionKeyword keyword : activeKeywords) {
+            if (lowerTitle.contains(keyword.getKeyword().toLowerCase())) {
+                return keyword.getAlertMessage();
+            }
         }
 
         return null; // 딴짓 키워드가 없으면 null 반환
