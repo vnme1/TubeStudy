@@ -205,24 +205,43 @@
 
           <div id="stats-section" class="lg:col-span-1 space-y-6">
             <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
-              <div class="mb-4">
-                <select
-                  id="period-selector"
-                  class="bg-[#1f1f1f] border border-[#3f3f3f] text-sm rounded-lg p-2.5 text-white focus:ring-red-500 focus:border-red-500"
+              <h3 class="text-gray-400 text-xs font-bold uppercase mb-4 tracking-wider">
+                📊 기간 선택
+              </h3>
+              <div class="grid grid-cols-2 gap-2 mb-6">
+                <button
+                  data-period="today"
+                  class="period-button py-2 px-3 text-xs font-semibold rounded-lg bg-[#272727] text-gray-300 hover:bg-red-600 hover:text-white transition border border-transparent"
                 >
-                  <option value="all">전체 누적</option>
-                  <option value="today">오늘</option>
-                  <option value="week">이번 주</option>
-                  <option value="month">이번 달</option>
-                </select>
+                  📅 오늘
+                </button>
+                <button
+                  data-period="week"
+                  class="period-button py-2 px-3 text-xs font-semibold rounded-lg bg-[#272727] text-gray-300 hover:bg-red-600 hover:text-white transition border border-transparent"
+                >
+                  📆 이번 주
+                </button>
+                <button
+                  data-period="month"
+                  class="period-button py-2 px-3 text-xs font-semibold rounded-lg bg-[#272727] text-gray-300 hover:bg-red-600 hover:text-white transition border border-transparent"
+                >
+                  📆 이번 달
+                </button>
+                <button
+                  data-period="all"
+                  class="period-button py-2 px-3 text-xs font-semibold rounded-lg bg-[#272727] text-gray-300 hover:bg-red-600 hover:text-white transition border border-transparent"
+                >
+                  ∞ 전체 누적
+                </button>
               </div>
-              <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">
-                Weekly Study Time (Total)
+
+              <h3 class="text-gray-400 text-xs font-bold uppercase mb-4 tracking-wider">
+                ⏱️ 학습 시간
               </h3>
               <div class="flex items-end gap-2 mb-2">
                 <span
                   id="total-study-time"
-                  class="text-2xl font-black text-white"
+                  class="text-3xl font-black text-white"
                   >00시간 00분</span
                 >
               </div>
@@ -231,7 +250,7 @@
               >
                 <div
                   id="week-goal-bar"
-                  class="h-full bg-gradient-to-r from-red-600 to-orange-500 w-[0%]"
+                  class="h-full bg-gradient-to-r from-red-600 to-orange-500 w-[0%] transition-all duration-300"
                 ></div>
               </div>
               <p class="text-xs text-gray-500 mt-2 text-right">
@@ -240,8 +259,8 @@
             </div>
 
             <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
-              <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">
-                Subject Distribution
+              <h3 class="text-gray-400 text-xs font-bold uppercase mb-4 tracking-wider">
+                📚 과목별 분포
               </h3>
               <div id="subject-distribution-list" class="space-y-3">
                 <p class="text-gray-500">데이터를 불러오는 중입니다...</p>
@@ -503,13 +522,32 @@
       }
 
       function setupPeriodFiltering() {
-        const selector = document.getElementById("period-selector");
+        const periodButtons = document.querySelectorAll('.period-button');
+        let activePeriod = 'all'; // 기본값
 
-        // 드롭다운 변경 시 이벤트 리스너
-        selector.addEventListener("change", (event) => {
-          const selectedPeriod = event.target.value;
-          fetchAndRenderStats(selectedPeriod); // 선택된 기간으로 통계 API 재호출
+        periodButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            // 이전 활성 버튼에서 스타일 제거
+            periodButtons.forEach((btn) => {
+              btn.classList.remove('bg-red-600', 'text-white', 'border-red-500');
+              btn.classList.add('bg-[#272727]', 'text-gray-300');
+            });
+
+            // 현재 클릭된 버튼에 활성 스타일 적용
+            button.classList.remove('bg-[#272727]', 'text-gray-300');
+            button.classList.add('bg-red-600', 'text-white', 'border-red-500');
+
+            activePeriod = button.dataset.period;
+            fetchAndRenderStats(activePeriod);
+          });
         });
+
+        // 초기 로드 시 "전체 누적" 버튼 활성화
+        const allButton = document.querySelector('[data-period="all"]');
+        if (allButton) {
+          allButton.classList.remove('bg-[#272727]', 'text-gray-300');
+          allButton.classList.add('bg-red-600', 'text-white', 'border-red-500');
+        }
       }
 
       // =========================================================

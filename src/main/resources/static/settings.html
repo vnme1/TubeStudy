@@ -95,9 +95,10 @@
       </header>
 
       <div class="flex-1 overflow-y-auto p-8">
+        <!-- 학습 목표 설정 -->
         <section class="mb-10 max-w-2xl">
           <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
-            학습 목표 설정
+            📚 학습 목표 설정
           </h2>
 
           <div class="bg-[#1f1f1f] p-8 rounded-xl shadow-lg border border-[#272727]">
@@ -106,18 +107,21 @@
                 <label for="weekly-goal" class="block text-sm font-medium text-gray-300 mb-3">
                   주간 학습 목표 (시간)
                 </label>
-                <input
-                  type="number"
-                  id="weekly-goal"
-                  name="weeklyGoalHours"
-                  min="1"
-                  max="168"
-                  required
-                  class="w-full p-3 bg-[#0f0f0f] border border-[#3f3f3f] rounded-lg text-lg text-white placeholder-gray-500 focus:border-red-600 focus:ring-red-600 outline-none"
-                  placeholder="예: 20"
-                />
+                <div class="flex items-center gap-4">
+                  <input
+                    type="number"
+                    id="weekly-goal"
+                    name="weeklyGoalHours"
+                    min="1"
+                    max="168"
+                    required
+                    class="flex-1 p-3 bg-[#0f0f0f] border border-[#3f3f3f] rounded-lg text-lg text-white placeholder-gray-500 focus:border-red-600 focus:ring-red-600 outline-none"
+                    placeholder="예: 20"
+                  />
+                  <span class="text-gray-400 font-medium">시간</span>
+                </div>
                 <p class="mt-2 text-sm text-gray-500">
-                  일주일에 달성하고자 하는 총 학습 시간(Hours)을 입력하세요. (최대 168시간)
+                  일주일에 달성하고자 하는 총 학습 시간을 입력하세요. (1~168시간)
                 </p>
               </div>
 
@@ -125,11 +129,116 @@
                 type="submit"
                 class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition duration-200 focus:outline-none focus:ring-4 focus:ring-red-800"
               >
-                목표 저장
+                <i class="fas fa-save mr-2"></i> 목표 저장
               </button>
             </form>
 
             <div id="message-area" class="mt-4 text-center text-sm" role="alert"></div>
+          </div>
+        </section>
+
+        <!-- 현재 진행 상황 -->
+        <section class="mb-10 max-w-2xl">
+          <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+            <h3 class="text-lg font-bold mb-4 text-gray-300">📊 이번 주 진행 상황</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-400">학습 시간</span>
+                <span id="current-weekly-hours" class="font-bold text-white">00시간 00분</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-400">주간 목표</span>
+                <span id="goal-weekly-hours" class="font-bold text-white">00시간</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-400">달성률</span>
+                <span id="goal-achievement" class="font-bold text-red-500">0%</span>
+              </div>
+            </div>
+            <div class="w-full bg-gray-700 h-3 rounded-full mt-4 overflow-hidden">
+              <div
+                id="progress-bar"
+                class="h-full bg-gradient-to-r from-red-600 to-orange-500 w-0 transition-all duration-300"
+              ></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 알림 설정 -->
+        <section class="mb-10 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
+            🔔 알림 설정
+          </h2>
+
+          <div class="bg-[#1f1f1f] p-8 rounded-xl shadow-lg border border-[#272727] space-y-6">
+            <!-- 딴짓 알림 활성화 -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-white font-semibold">딴짓 방지 알림</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  딴짓 콘텐츠 감지 시 알림을 받을지 여부를 설정합니다.
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="distraction-alert"
+                  class="sr-only peer"
+                  checked
+                />
+                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              </label>
+            </div>
+
+            <!-- 공부 완료 알림 -->
+            <div class="flex items-center justify-between pt-4 border-t border-[#3f3f3f]">
+              <div>
+                <h3 class="text-white font-semibold">목표 달성 알림</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  주간 학습 목표를 달성하면 축하 알림을 받습니다.
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="achievement-alert"
+                  class="sr-only peer"
+                  checked
+                />
+                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- 데이터 관리 -->
+        <section class="mb-10 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
+            🗑️ 데이터 관리
+          </h2>
+
+          <div class="bg-[#1f1f1f] p-8 rounded-xl shadow-lg border border-[#272727] space-y-4">
+            <button
+              id="export-button"
+              class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200"
+            >
+              <i class="fas fa-download"></i> 학습 기록 내보내기 (CSV)
+            </button>
+
+            <button
+              id="clear-button"
+              class="w-full flex items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition duration-200"
+            >
+              <i class="fas fa-trash-alt"></i> 모든 기록 삭제
+            </button>
+          </div>
+        </section>
+
+        <!-- 버전 정보 -->
+        <section class="max-w-2xl">
+          <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727] text-center text-gray-500 text-sm">
+            <p><i class="fas fa-info-circle"></i> TubeStudy v1.0.0 · 2025</p>
+            <p class="mt-2">모든 학습 데이터는 로컬에 저장됩니다.</p>
           </div>
         </section>
       </div>
@@ -138,10 +247,15 @@
     <script>
       // 포트 번호 18085를 사용합니다.
       const SETTINGS_API_URL = 'http://localhost:18085/api/settings';
+      const STATS_API_URL = 'http://localhost:18085/api/tracker/dashboard/stats';
 
       const goalInput = document.getElementById('weekly-goal');
       const settingsForm = document.getElementById('settings-form');
       const messageArea = document.getElementById('message-area');
+      const distractionAlert = document.getElementById('distraction-alert');
+      const achievementAlert = document.getElementById('achievement-alert');
+      const exportButton = document.getElementById('export-button');
+      const clearButton = document.getElementById('clear-button');
 
       // 메시지 표시 헬퍼 함수
       function showMessage(text, isSuccess = true) {
@@ -153,6 +267,13 @@
         }, 3000);
       }
 
+      // 시간을 시:분 형식으로 포맷하는 함수
+      function formatMinutesToTime(totalMinutes) {
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        return `${hours}시간 ${minutes}분`;
+      }
+
       // =========================================================
       // 1. 현재 설정 값 불러오기
       // =========================================================
@@ -162,8 +283,18 @@
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
           const data = await response.json();
-
           goalInput.value = data.weeklyGoalHours;
+
+          // 로컬 스토리지에서 알림 설정 불러오기
+          const distractionAlertSetting = localStorage.getItem('distractionAlert');
+          const achievementAlertSetting = localStorage.getItem('achievementAlert');
+          
+          if (distractionAlertSetting !== null) {
+            distractionAlert.checked = JSON.parse(distractionAlertSetting);
+          }
+          if (achievementAlertSetting !== null) {
+            achievementAlert.checked = JSON.parse(achievementAlertSetting);
+          }
         } catch (error) {
           console.error("설정 데이터를 불러오는 중 오류 발생:", error);
           showMessage("설정 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.", false);
@@ -171,7 +302,30 @@
       }
 
       // =========================================================
-      // 2. 설정 값 저장 (폼 제출)
+      // 2. 현재 주간 진행 상황 표시
+      // =========================================================
+      async function updateWeeklyProgress() {
+        try {
+          const response = await fetch(`${STATS_API_URL}?periodType=week`);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const stats = await response.json();
+
+          // 시간을 분으로 변환하여 표시
+          const totalMinutes = Math.floor(stats.totalStudySeconds / 60);
+          document.getElementById('current-weekly-hours').innerText = formatMinutesToTime(totalMinutes);
+          document.getElementById('goal-weekly-hours').innerText = `${goalInput.value}시간`;
+
+          const achievement = Math.round(stats.weekGoalPercentage);
+          document.getElementById('goal-achievement').innerText = `${achievement}%`;
+          document.getElementById('progress-bar').style.width = `${Math.min(100, achievement)}%`;
+        } catch (error) {
+          console.error("주간 진행 상황을 불러오는 중 오류 발생:", error);
+        }
+      }
+
+      // =========================================================
+      // 3. 설정 값 저장 (폼 제출)
       // =========================================================
       settingsForm.addEventListener('submit', async function(event) {
         event.preventDefault();
@@ -196,17 +350,58 @@
 
           const updatedData = await response.json();
 
-          showMessage(`목표가 성공적으로 저장되었습니다: ${updatedData.weeklyGoalHours}시간`, true);
+          showMessage(`✅ 목표가 성공적으로 저장되었습니다: ${updatedData.weeklyGoalHours}시간`, true);
+          
+          // 진행 상황 업데이트
+          updateWeeklyProgress();
         } catch (error) {
           console.error("설정 저장 중 오류 발생:", error);
-          showMessage("목표 저장 중 오류가 발생했습니다. 서버 상태를 확인하세요.", false);
+          showMessage("❌ 목표 저장 중 오류가 발생했습니다. 서버 상태를 확인하세요.", false);
         }
       });
 
       // =========================================================
-      // 3. 페이지 로드 시 호출
+      // 4. 알림 설정 저장 (로컬 스토리지)
+      // =========================================================
+      distractionAlert.addEventListener('change', function() {
+        localStorage.setItem('distractionAlert', JSON.stringify(this.checked));
+      });
+
+      achievementAlert.addEventListener('change', function() {
+        localStorage.setItem('achievementAlert', JSON.stringify(this.checked));
+      });
+
+      // =========================================================
+      // 5. 데이터 내보내기 (CSV)
+      // =========================================================
+      exportButton.addEventListener('click', async function() {
+        try {
+          alert('📥 CSV 내보내기 기능은 다음 업데이트에서 추가됩니다.');
+          // TODO: 서버에서 CSV 데이터 받아 다운로드
+        } catch (error) {
+          console.error("내보내기 중 오류 발생:", error);
+          showMessage("❌ 내보내기 중 오류가 발생했습니다.", false);
+        }
+      });
+
+      // =========================================================
+      // 6. 모든 데이터 삭제
+      // =========================================================
+      clearButton.addEventListener('click', function() {
+        if (confirm('⚠️ 정말로 모든 학습 기록을 삭제하시겠습니까?\n(이 작업은 되돌릴 수 없습니다.)')) {
+          alert('🗑️ 전체 데이터 삭제 기능은 다음 업데이트에서 추가됩니다.');
+          // TODO: 서버에 전체 삭제 요청
+        }
+      });
+
+      // =========================================================
+      // 7. 페이지 로드 시 호출
       // =========================================================
       fetchCurrentSettings();
+      updateWeeklyProgress();
+
+      // 10초마다 진행 상황 업데이트 (실시간 동기화)
+      setInterval(updateWeeklyProgress, 10000);
     </script>
   </body>
 </html>

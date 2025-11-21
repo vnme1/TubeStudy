@@ -3,6 +3,12 @@
 // 학습 진도 데이터를 추출하고 서버로 전송하는 스크립트
 // =======================================================
 
+// 마지막으로 서버에 전송했던 재생 위치 (초 단위)
+let lastSentProgress = 0; 
+
+// 마지막으로 서버에 전송했던 시점의 타임스탬프 (밀리초)
+let lastSentTimestamp = 0;
+
 // 1. 유튜브 영상 관련 데이터를 추출하는 함수
 function getVideoData() {
   // 현재 재생 중인 비디오 요소 찾기
@@ -37,45 +43,92 @@ function getVideoData() {
 }
 
 // 2. 서버로 데이터 전송하는 함수 (async/await 및 응답 처리)
+// 2. 서버로 데이터 전송하는 함수 (async/await 및 응답 처리)
 async function sendDataToServer() {
-  const data = getVideoData();
+    const data = getVideoData(); // data 객체는 { videoId, title, channel, currentTime, duration, url } 포함
 
-  // 영상 ID와 길이가 있을 때만 서버로 전송
-  if (data.videoId && data.duration > 0) {
-    // 디버깅을 위한 콘솔 로그 (서버 전송 확인용)
-    console.log(
-      `[TubeStudy] 전송 중: ${data.title} (${Math.floor(
-        data.currentTime
-      )}/${Math.floor(data.duration)}s)`
-    );
-
-    try {
-      // 포트 18085로 전송 (수정된 포트)
-      const response = await fetch("http://localhost:18085/api/tracker/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        const syncResponse = await response.json(); // 서버 응답 JSON 파싱
-
-        // 딴짓 방지 로직 실행
-        if (syncResponse.requiresNotification) {
-          console.warn(
-            `[TubeStudy] 딴짓 감지! 메시지: ${syncResponse.message}`
-          );
-          // 알림 함수 호출 (alert() 대신 인-페이지 모달 사용)
-          showDistractionAlert(syncResponse.message);
+    // 영상 ID와 길이가 있을 때만 서버로 전송
+    if (data.videoId && data.duration > 0) {
+        
+        // ----------------------------------------------------
+        // ✅ 1. 실제 시청 시간(accumulatedStudySeconds) 계산 로직 (핵심)
+        // ----------------------------------------------------
+        let accumulatedStudySeconds = 0;
+        
+        // **A. 초기화 및 첫 전송 처리**
+        if (lastSentProgress === 0) {
+            lastSentProgress = data.currentTime;
+            lastSentTimestamp = Date.now();
+            // 첫 전송은 학습 시간 누적 없이 현재 진도만 기록
+            accumulatedStudySeconds = 0; 
+        } else {
+            // **B. 누적 학습 시간 계산**
+            
+            // 실제 경과된 시간 (초)
+            const timeElapsed = (Date.now() - lastSentTimestamp) / 1000; 
+            
+            // 재생 위치의 변화량 (현재 위치 - 이전 전송 위치)
+            const progressChange = data.currentTime - lastSentProgress;
+            
+            // 🚨 유효성 검사: 시청으로 인정되는 조건
+            // 1. 앞으로 재생되었고 (progressChange > 0)
+            // 2. 변화량이 경과된 시간의 2.0배 이하여야 함 (배속 재생 및 작은 오차 허용)
+            if (progressChange > 0 && progressChange <= timeElapsed * 2.0) {
+                // 재생 위치의 변화량(progressChange)을 실제 학습 시간으로 간주
+                accumulatedStudySeconds = progressChange;
+            } else {
+                // 뒤로 감기, 앞으로 크게 건너뛰기, 탭 비활성화 등으로 인한 큰 시간차는 0으로 처리
+                accumulatedStudySeconds = 0; 
+            }
         }
-      } else {
-        console.error("서버 응답 오류:", response.status);
-      }
-    } catch (err) {
-      // 서버가 꺼져있을 때 에러 로그 무시
-      // console.log("[TubeStudy] 서버 오프라인 또는 연결 오류");
+        
+        // ----------------------------------------------------
+        // 2. 서버 DTO 형식에 맞춰 객체 생성
+        // ----------------------------------------------------
+        const progressDto = {
+            videoId: data.videoId,
+            title: data.title,
+            channel: data.channel,
+            totalDurationSeconds: data.duration, // 서버 필드명에 맞게 변경
+            lastProgressSeconds: data.currentTime, // 서버 필드명에 맞게 변경
+            // ✅ 새로 추가된 필드: 이번 동기화 간격 동안 실제로 시청한 시간
+            accumulatedStudySeconds: accumulatedStudySeconds 
+        };
+
+        // 디버깅을 위한 콘솔 로그 (서버 전송 확인용)
+        console.log(
+            `[TubeStudy] 전송 중: ${progressDto.title} | ${Math.floor(progressDto.lastProgressSeconds)}/${Math.floor(progressDto.totalDurationSeconds)}s | 학습 시간: ${accumulatedStudySeconds.toFixed(2)}s`
+        );
+        
+        try {
+            // 포트 18085로 전송
+            const response = await fetch("http://localhost:18085/api/tracker/sync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(progressDto), // 수정된 DTO 전송
+            });
+
+            if (response.ok) {
+                const syncResponse = await response.json();
+
+                // 딴짓 방지 로직 실행
+                if (syncResponse.requiresNotification) {
+                    console.warn(
+                        `[TubeStudy] 딴짓 감지! 메시지: ${syncResponse.message}`
+                    );
+                    showDistractionAlert(syncResponse.message);
+                }
+            } else {
+                console.error("서버 응답 오류:", response.status);
+            }
+        } catch (err) {
+            // 서버 오프라인 에러 무시
+        }
+
+        // 3. 다음 동기화를 위해 현재 상태를 저장
+        lastSentProgress = data.currentTime;
+        lastSentTimestamp = Date.now();
     }
-  }
 }
 
 // 3. 경고 메시지를 유튜브 페이지에 직접 삽입하는 함수

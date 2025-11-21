@@ -5,90 +5,328 @@ import com.tubestudy.tracker.dto.SyncResponseDto;
 import com.tubestudy.tracker.dto.VideoProgressDto;
 import com.tubestudy.tracker.dto.CourseItemDto;
 import com.tubestudy.tracker.dto.DashboardStatsDto;
-//import com.tubestudy.tracker.dto.DashboardStatsDto.SubjectStatDto;
 import com.tubestudy.tracker.entity.VideoProgress;
 import com.tubestudy.tracker.repository.VideoProgressRepository;
-import com.tubestudy.tracker.repository.SettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Optional;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Comparator;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+// import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor // Repository 자동 주입을 위한 Lombok 어노테이션
+@RequiredArgsConstructor
 public class TrackerService {
 
     private final VideoProgressRepository repository;
     private final SettingsService settingsService;
 
+    // ========================================================
+    // [Core Logic] 1. 동기화 및 기록 저장/응답
+    // ========================================================
+
+    /**
+     * 데이터를 저장하고 익스텐션에 보낼 응답을 생성합니다.
+     * 이 메서드에서 DB 저장/업데이트와 딴짓 분석 로직을 모두 처리합니다.
+     * * @param dto 익스텐션으로부터 받은 데이터 (accumulatedStudySeconds 포함)
+     * 
+     * @return 익스텐션에게 보낼 SyncResponseDto
+     */
     @Transactional
-    public void saveOrUpdate(VideoProgressDto dto) {
-        // 1. 기존 기록 조회
-        Optional<VideoProgress> existingProgressOpt = repository.findById(dto.getVideoId());
+    public SyncResponseDto saveAndGenerateResponse(VideoProgressDto dto) {
+
+        // 1. 기존 기록 찾기
+        Optional<VideoProgress> existingProgressOpt = repository.findByVideoId(dto.getVideoId());
+
+        // 2. 딴짓 분석
+        String distractionMessage = analyzeDistraction(dto.getTitle());
+
+        // 3. 진도 및 완료 상태 계산
+        double ratio = dto.getLastProgressSeconds() / dto.getTotalDurationSeconds();
+        int currentPercentage = (int) (ratio * 100);
 
         VideoProgress progress;
 
         if (existingProgressOpt.isPresent()) {
-            // 2. 기록이 있으면 업데이트
             progress = existingProgressOpt.get();
 
-            // 3. 누적 공부 시간 계산 (핵심 로직)
-            // 마지막 동기화 시간과 현재 시간 차이를 초로 계산 (최대 10초)
-            long timeElapsed = ChronoUnit.SECONDS.between(progress.getLastSyncedAt(), LocalDateTime.now());
+            // 3-1. 기록이 있으면 업데이트
 
-            // 15초 이내의 간격만 유효한 학습 시간으로 인정 (content.js의 5초 간격 전송 고려)
-            if (timeElapsed > 0 && timeElapsed <= 15) {
-                progress.setStudyTimeSeconds(progress.getStudyTimeSeconds() + timeElapsed);
-            }
+            // ✅ A. 실제 시청 시간 누적 및 최종 진도 업데이트
+            progress.update(dto.getAccumulatedStudySeconds(), dto.getLastProgressSeconds()); // 💡 update 메서드 시그니처 조정 필요
 
         } else {
-            // 2. 기록이 없으면 신규 생성
-            progress = new VideoProgress();
-            progress.setVideoId(dto.getVideoId());
-            progress.setCreatedAt(LocalDateTime.now());
+            // 3-2. 기록이 없으면 신규 생성
+
+            // ✅ B. 신규 생성 시 초기 최고 진도 및 완료 상태 설정
+            int initialHighestPercentage = (currentPercentage >= 98) ? 100 : currentPercentage;
+            boolean initialIsCompleted = (currentPercentage >= 98);
+
+            progress = VideoProgress.builder()
+                    .videoId(dto.getVideoId())
+                    .title(dto.getTitle())
+                    .channel(dto.getChannel())
+                    .totalDurationSeconds(dto.getTotalDurationSeconds())
+                    .lastProgressSeconds(dto.getLastProgressSeconds())
+                    .studyTimeSeconds(dto.getAccumulatedStudySeconds())
+                    .highestProgressPercentage(initialHighestPercentage) // ✅ 최고 진도 초기값
+                    .isCompleted(initialIsCompleted) // ✅ 완료 상태 초기값
+                    .build();
+
+            repository.save(progress);
         }
 
-        // 공통 업데이트 (제목, 채널명, 재생 위치)
-        progress.setTitle(dto.getTitle());
-        progress.setChannel(dto.getChannel());
-        progress.setDurationSeconds(dto.getDuration());
-        progress.setLastProgressSeconds(dto.getCurrentTime());
+        // ************ ✅ 4. 최고 진도 및 완료 상태 공통 업데이트 로직 (새로 추가) ************
 
-        // save를 호출하여 저장 (JPA가 ID를 보고 insert/update를 결정)
-        repository.save(progress);
+        // C. 최고 진도 업데이트: 현재 진도가 저장된 최고 진도보다 높으면 업데이트
+        if (currentPercentage > progress.getHighestProgressPercentage()) {
+            progress.setHighestProgressPercentage(currentPercentage);
+        }
+
+        // D. 완료 상태 업데이트: 98% 이상 도달하면 isCompleted를 true로 설정 (한번 true가 되면 유지됨)
+        if (currentPercentage >= 98) {
+            progress.setCompleted(true);
+        }
+
+        // (JPA의 변경 감지(Dirty Checking) 덕분에 기존 기록 업데이트 시에는 별도 save 호출 불필요)
+
+        // ************ ✅ 5. 응답 DTO 생성 (기존 로직 유지) ************
+        if (distractionMessage != null) {
+            return SyncResponseDto.builder()
+                    .requiresNotification(true)
+                    .message(distractionMessage)
+                    .build();
+        } else {
+            return SyncResponseDto.builder()
+                    .requiresNotification(false)
+                    .message("Sync successful.")
+                    .build();
+        }
     }
 
-    // (기존 코드 아래에 추가)
-    // 현재 시청 중인 (가장 최근에 동기화된) 영상을 찾아서 DTO로 변환
+    /**
+     * 영상 제목을 분석하여 딴짓 여부를 판단하는 로직
+     * 영문 및 한글 키워드 모두 지원
+     * 
+     * @param title 영상 제목
+     * @return 딴짓 알림 메시지 (딴짓이 아니면 null)
+     */
+    private String analyzeDistraction(String title) {
+        String lowerTitle = title.toLowerCase();
+
+        // Vlog/브이로그/먹방 관련
+        if (lowerTitle.contains("vlog") || lowerTitle.contains("브이로그") ||
+                lowerTitle.contains("먹방") || lowerTitle.contains("브이로그 혹은 음식")) {
+            return "Vlog는 잠시 후에! 지금은 공부할 시간입니다. 집중하세요! 👀";
+        }
+
+        // 게임/게임플레이 관련
+        if (lowerTitle.contains("게임") || lowerTitle.contains("game play") ||
+                lowerTitle.contains("게임플레이") || lowerTitle.contains("gameplay")) {
+            return "게임을 유혹을 참아내고 다시 강의로 돌아오세요. 🕹️";
+        }
+
+        // ASMR/예능 관련
+        if (lowerTitle.contains("asmr") || lowerTitle.contains("예능") ||
+                lowerTitle.contains("예술") || lowerTitle.contains("엔터테인먼트")) {
+            return "휴식 시간에는 좋습니다. 하지만 지금은 강의를 시청 중인 것 같아요! 🎧";
+        }
+
+        return null; // 딴짓 키워드가 없으면 null 반환
+    }
+
+    // ========================================================
+    // [Dashboard] 2. 통계 데이터 조회 (Stats)
+    // ========================================================
+
+    @Transactional(readOnly = true)
+    public DashboardStatsDto getDashboardStats(String periodType) {
+
+        // 1. 조회 기간 결정 및 기록 조회
+        LocalDateTime[] range = calculateTimeRange(periodType);
+        LocalDateTime startDate = range[0];
+        // LocalDateTime endDate = range[1]; // 사용하지 않음
+
+        List<VideoProgress> allVideos;
+        if (startDate != null) {
+            // 기간이 설정되면 LastSyncedAt을 기준으로 조회
+            allVideos = repository.findByLastSyncedAtBetween(startDate, range[1]);
+        } else {
+            // "all" 또는 잘못된 값이 들어오면 기존대로 전체 조회
+            allVideos = repository.findAll();
+        }
+
+        // ✅ 2. 목표 시간 동적 조회
+        int weeklyGoalHours = settingsService.getSettings().getWeeklyGoalHours();
+
+        // 3. 총 학습 시간 계산 및 과목별 누적 시간 계산
+        double totalStudySeconds = 0;
+        Map<String, Double> subjectAccumulatedSeconds = new HashMap<>();
+
+        for (VideoProgress video : allVideos) {
+            // ⚠️ 변경됨: LastProgressSeconds 대신 studyTimeSeconds를 통계 기준으로 사용
+            double studyTimeForVideo = video.getStudyTimeSeconds();
+            totalStudySeconds += studyTimeForVideo;
+
+            // 과목 분류
+            String subject = classifySubject(video.getTitle());
+            subjectAccumulatedSeconds.merge(subject, studyTimeForVideo, Double::sum);
+        }
+
+        final double finalTotalStudySeconds = totalStudySeconds;
+
+        // 4. 과목 분포 퍼센트 계산
+        List<DashboardStatsDto.SubjectStatDto> subjectStats = subjectAccumulatedSeconds.entrySet().stream()
+                .map(entry -> {
+                    String subjectName = entry.getKey();
+                    double seconds = entry.getValue();
+                    double percentage = (finalTotalStudySeconds > 0) ? (seconds / finalTotalStudySeconds) * 100 : 0;
+                    String color = getSubjectColor(subjectName);
+
+                    return DashboardStatsDto.SubjectStatDto.builder()
+                            .subjectName(subjectName)
+                            .percentage(Math.round(percentage * 100.0) / 100.0)
+                            .color(color)
+                            .build();
+                })
+                .sorted(Comparator.comparing(DashboardStatsDto.SubjectStatDto::getPercentage).reversed())
+                .collect(Collectors.toList());
+
+        // 5. 포맷팅 및 DTO 완성
+        String formattedTime = formatTotalSeconds(totalStudySeconds);
+
+        // 주간 목표 시간(Hours)을 초(Seconds)로 변환
+        double totalGoalSeconds = (double) weeklyGoalHours * 3600;
+
+        return DashboardStatsDto.builder()
+                .totalStudySeconds(totalStudySeconds)
+                .totalStudyTimeFormatted(formattedTime)
+                .totalStudyHours(totalStudySeconds / 3600.0)
+                .subjectStats(subjectStats)
+                // 동적으로 조회된 목표 시간을 사용하여 퍼센트 계산
+                .weekGoalPercentage(Math.min(100, (totalStudySeconds / totalGoalSeconds) * 100))
+                .build();
+    }
+
+    // ... (calculateTimeRange, classifySubject, getSubjectColor, formatTotalSeconds
+    // 등 기존 헬퍼 메서드는 유지)
+
+    /**
+     * 기간 유형에 따른 시작 시간과 종료 시간을 계산합니다.
+     * 
+     * @param periodType "today", "week", "month", "all"
+     * @return [startDate, endDate] 배열 (startDate가 null이면 전체)
+     */
+    private LocalDateTime[] calculateTimeRange(String periodType) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = now;
+
+        switch (periodType.toLowerCase()) {
+            case "today":
+                startDate = now.truncatedTo(ChronoUnit.DAYS); // 오늘 00:00:00
+                break;
+            case "week":
+                // 이번 주 월요일 00:00:00
+                // DayOfWeek.MONDAY에서 현재 요일까지 계산하여 정확한 월요일 도출
+                java.time.LocalDate mondayOfThisWeek = now.toLocalDate()
+                        .with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+                startDate = mondayOfThisWeek.atStartOfDay();
+                break;
+            case "month":
+                startDate = now.toLocalDate().withDayOfMonth(1).atStartOfDay(); // 이번 달 1일 00:00:00
+                break;
+            case "all":
+            default:
+                // startDate = null; (전체 조회, 기본값)
+                break;
+        }
+
+        return new LocalDateTime[] { startDate, endDate };
+    }
+
+    /**
+     * 영상 제목을 기준으로 과목 분류 (시뮬레이션)
+     */
+    private String classifySubject(String title) {
+        String lowerTitle = title.toLowerCase();
+
+        if (lowerTitle.contains("spring") || lowerTitle.contains("java") || lowerTitle.contains("jpa")
+                || lowerTitle.contains("서버")) {
+            return "Java / Backend";
+        }
+        if (lowerTitle.contains("react") || lowerTitle.contains("js") || lowerTitle.contains("css")
+                || lowerTitle.contains("프론트")) {
+            return "Frontend";
+        }
+        if (lowerTitle.contains("알고리즘") || lowerTitle.contains("cs") || lowerTitle.contains("자료구조")
+                || lowerTitle.contains("네트워크")) {
+            return "CS 지식";
+        }
+        return "기타";
+    }
+
+    /**
+     * 과목별 색상 지정 (프런트엔드 Tailwind CSS 색상 코드)
+     */
+    private String getSubjectColor(String subject) {
+        switch (subject) {
+            case "Java / Backend":
+                return "red-500";
+            case "Frontend":
+                return "blue-500";
+            case "CS 지식":
+                return "green-500";
+            default:
+                return "gray-500";
+        }
+    }
+
+    /**
+     * 총 초를 시:분 형식으로 변환하는 헬퍼 함수
+     */
+    private String formatTotalSeconds(double seconds) {
+        long totalSeconds = (long) seconds;
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+
+        if (hours > 0) {
+            return String.format("%d시간 %02d분", hours, minutes);
+        } else {
+            return String.format("%d분", minutes);
+        }
+    }
+
+    // ========================================================
+    // [Dashboard] 3. 이어보기 및 코스 목록 조회/삭제 (Courses)
+    // ========================================================
+
     @Transactional(readOnly = true)
     public ContinueWatchingDto getContinueWatchingData() {
         // 1. 가장 최근에 동기화된 영상을 1개 찾습니다.
-        // 이 기능을 위해 Repository에 새로운 메서드가 필요합니다. (아래 3번 참고)
         Optional<VideoProgress> latestVideoOpt = repository.findTopByOrderByLastSyncedAtDesc();
 
         if (latestVideoOpt.isEmpty()) {
-            // 데이터가 없는 경우 null 반환 또는 기본 DTO 반환
             return null;
         }
 
         VideoProgress video = latestVideoOpt.get();
 
-        // 2. DTO로 변환 및 포맷팅
-        int percentage = (int) Math.min(100, (video.getLastProgressSeconds() / video.getDurationSeconds()) * 100);
+        // 진도율 계산 (추출된 메서드 사용)
+        int percentage = calculateProgressPercentage(video);
 
-        // 시간 포맷팅 헬퍼 메서드 (간단히 구현)
+        // 시간 포맷팅 헬퍼 메서드
         String progressTime = formatSeconds(video.getLastProgressSeconds());
-        String durationTime = formatSeconds(video.getDurationSeconds());
+        String durationTime = formatSeconds(video.getTotalDurationSeconds());
 
-        // 유튜브 이어보기 링크 생성 (핵심 기능)
+        // 유튜브 이어보기 링크 생성
         String continueUrl = String.format("https://www.youtube.com/watch?v=%s&t=%ds",
                 video.getVideoId(),
                 (int) video.getLastProgressSeconds());
@@ -105,7 +343,7 @@ public class TrackerService {
                 .build();
     }
 
-    // 초를 시:분:초 형식으로 변환하는 간단한 헬퍼 메서드
+    // 초를 분:초 형식으로 변환하는 간단한 헬퍼 메서드
     private String formatSeconds(double seconds) {
         long totalSeconds = (long) seconds;
         long minutes = totalSeconds % 3600 / 60;
@@ -113,59 +351,7 @@ public class TrackerService {
         return String.format("%02d:%02d", minutes, secs);
     }
 
-    /**
-     * 영상 제목을 분석하여 딴짓 여부를 판단하는 시뮬레이션 로직
-     * 
-     * @param title 영상 제목
-     * @return 딴짓 알림 메시지 (딴짓이 아니면 null)
-     */
-    private String analyzeDistraction(String title) {
-        String lowerTitle = title.toLowerCase();
-
-        if (lowerTitle.contains("vlog") || lowerTitle.contains("브이로그")) {
-            return "Vlog는 잠시 후에! 지금은 공부할 시간입니다. 집중하세요! 👀";
-        }
-        if (lowerTitle.contains("게임") || lowerTitle.contains("game play")) {
-            return "게임을 유혹을 참아내고 다시 강의로 돌아오세요. 🕹️";
-        }
-        if (lowerTitle.contains("asmr") || lowerTitle.contains("먹방")) {
-            return "휴식 시간에는 좋습니다. 하지만 지금은 강의를 시청 중인 것 같아요! 🎧";
-        }
-
-        return null; // 딴짓 키워드가 없으면 null 반환
-    }
-
-    /**
-     * 데이터를 저장하고 익스텐션에 보낼 응답을 생성합니다.
-     * 
-     * @param dto 익스텐션으로부터 받은 데이터
-     * @return 익스텐션에게 보낼 SyncResponseDto
-     */
-    @Transactional
-    public SyncResponseDto saveAndGenerateResponse(VideoProgressDto dto) {
-        // 1. 기존 saveOrUpdate 로직을 수행합니다. (DB 저장)
-        saveOrUpdate(dto);
-
-        // 2. 딴짓 분석
-        String distractionMessage = analyzeDistraction(dto.getTitle());
-
-        // 3. 응답 DTO 생성
-        if (distractionMessage != null) {
-            return SyncResponseDto.builder()
-                    .requiresNotification(true)
-                    .message(distractionMessage)
-                    .build();
-        } else {
-            return SyncResponseDto.builder()
-                    .requiresNotification(false)
-                    .message("Sync successful.")
-                    .build();
-        }
-    }
-
-    // ********************************************
-    // 코스 목록 조회 API 로직 (새로 추가)
-    // ********************************************
+    // 코스 목록 조회 API 로직
     @Transactional(readOnly = true)
     public List<CourseItemDto> getAllCourseItems() {
         // 1. 모든 시청 기록을 마지막 동기화 시간 내림차순으로 가져옵니다.
@@ -179,7 +365,8 @@ public class TrackerService {
 
     // Entity to DTO 변환 헬퍼 메서드
     private CourseItemDto convertToCourseItemDto(VideoProgress video) {
-        int percentage = (int) Math.min(100, (video.getLastProgressSeconds() / video.getDurationSeconds()) * 100);
+        // 진도율 계산 (추출된 메서드 사용)
+        int percentage = calculateProgressPercentage(video);
 
         // 유튜브 이어보기 링크 생성
         String continueUrl = String.format("https://www.youtube.com/watch?v=%s&t=%ds",
@@ -194,6 +381,21 @@ public class TrackerService {
                 .lastProgressTimeAgo(formatTimeAgo(video.getLastSyncedAt())) // 시간 포맷팅
                 .continueWatchUrl(continueUrl)
                 .build();
+    }
+
+    // 진도 비율을 퍼센트로 계산하는 헬퍼 메서드 (98% 보정 포함)
+    private int calculateProgressPercentage(VideoProgress video) {
+        int percentage;
+        if (video.isCompleted()) {
+            // 완료 상태라면 무조건 100% 표시
+            percentage = 100;
+        } else {
+            // 완료 상태가 아니면 현재 lastProgressSeconds를 반영
+            double ratio = video.getLastProgressSeconds() / video.getTotalDurationSeconds();
+            // 98% 보정 적용
+            percentage = (int) (ratio >= 0.98 ? 100 : Math.min(100, ratio * 100));
+        }
+        return percentage;
     }
 
     // 시간 포맷팅 헬퍼 메서드 (방금 전, 5분 전, 2일 전 등으로 표시)
@@ -220,165 +422,9 @@ public class TrackerService {
         return pastTime.toLocalDate().toString();
     }
 
-    // ********************************************
-    // 통계 계산 API 로직
-    // ********************************************
-    @Transactional(readOnly = true)
-    public DashboardStatsDto getDashboardStats(String periodType) {
-
-        // 1. 조회 기간 결정
-        LocalDateTime[] range = calculateTimeRange(periodType);
-        LocalDateTime startDate = range[0];
-        LocalDateTime endDate = range[1];
-
-        List<VideoProgress> allVideos;
-        if (startDate != null) {
-            // 기간이 설정되면 새로운 Repository 메서드 사용
-            allVideos = repository.findByLastSyncedAtBetween(startDate, endDate);
-        } else {
-            // "all" 또는 잘못된 값이 들어오면 기존대로 전체 조회
-            allVideos = repository.findAll();
-        }
-
-        // ✅ 2. 목표 시간 동적 조회
-        // SettingsService를 사용하여 DB에서 설정된 주간 목표 시간을 가져옵니다.
-        int weeklyGoalHours = settingsService.getSettings().getWeeklyGoalHours();
-
-        // 3. 총 학습 시간 계산 및 과목별 누적 시간 계산
-        double totalStudySeconds = 0;
-        Map<String, Double> subjectAccumulatedSeconds = new HashMap<>();
-
-        for (VideoProgress video : allVideos) {
-            // 여기서는 영상의 최종 진도(LastProgressSeconds)를 학습 시간으로 간주합니다.
-            double studyTimeForVideo = video.getLastProgressSeconds();
-            totalStudySeconds += studyTimeForVideo;
-
-            // 과목 분류
-            String subject = classifySubject(video.getTitle());
-            subjectAccumulatedSeconds.merge(subject, studyTimeForVideo, Double::sum);
-        }
-
-        final double finalTotalStudySeconds = totalStudySeconds;
-
-        // 4. 과목 분포 퍼센트 계산
-        List<DashboardStatsDto.SubjectStatDto> subjectStats = subjectAccumulatedSeconds.entrySet().stream()
-                .map(entry -> {
-                    String subjectName = entry.getKey();
-                    double seconds = entry.getValue();
-                    // 총 시간이 0이면 나누기 오류를 방지합니다.
-                    double percentage = (finalTotalStudySeconds > 0) ? (seconds / finalTotalStudySeconds) * 100 : 0;
-                    String color = getSubjectColor(subjectName);
-
-                    return DashboardStatsDto.SubjectStatDto.builder()
-                            .subjectName(subjectName)
-                            .percentage(Math.round(percentage * 100.0) / 100.0)
-                            .color(color)
-                            .build();
-                })
-                .sorted(Comparator.comparing(DashboardStatsDto.SubjectStatDto::getPercentage).reversed())
-                .collect(Collectors.toList());
-
-        // 5. 포맷팅 및 DTO 완성
-        String formattedTime = formatTotalSeconds(totalStudySeconds);
-
-        // ✅ 주간 목표 시간(Hours)을 초(Seconds)로 변환
-        double totalGoalSeconds = (double) weeklyGoalHours * 3600;
-
-        return DashboardStatsDto.builder()
-                .totalStudySeconds(totalStudySeconds)
-                .totalStudyTimeFormatted(formattedTime)
-                .totalStudyHours(totalStudySeconds / 3600.0)
-                .subjectStats(subjectStats)
-                // ✅ 동적으로 조회된 목표 시간을 사용하여 퍼센트 계산
-                .weekGoalPercentage(Math.min(100, (totalStudySeconds / totalGoalSeconds) * 100))
-                .build();
-    }
-
-    // 영상 제목을 기준으로 과목 분류 (시뮬레이션)
-    private String classifySubject(String title) {
-        String lowerTitle = title.toLowerCase();
-
-        if (lowerTitle.contains("spring") || lowerTitle.contains("java") || lowerTitle.contains("jpa")
-                || lowerTitle.contains("서버")) {
-            return "Java / Backend";
-        }
-        if (lowerTitle.contains("react") || lowerTitle.contains("js") || lowerTitle.contains("css")
-                || lowerTitle.contains("프론트")) {
-            return "Frontend";
-        }
-        if (lowerTitle.contains("알고리즘") || lowerTitle.contains("cs") || lowerTitle.contains("자료구조")
-                || lowerTitle.contains("네트워크")) {
-            return "CS 지식";
-        }
-        return "기타";
-    }
-
-    // 과목별 색상 지정 (프런트엔드 Tailwind CSS 색상 코드)
-    private String getSubjectColor(String subject) {
-        switch (subject) {
-            case "Java / Backend":
-                return "red-500";
-            case "Frontend":
-                return "blue-500";
-            case "CS 지식":
-                return "green-500";
-            default:
-                return "gray-500";
-        }
-    }
-
-    // 총 초를 시:분 형식으로 변환하는 헬퍼 함수
-    private String formatTotalSeconds(double seconds) {
-        long totalSeconds = (long) seconds;
-        long hours = totalSeconds / 3600;
-        long minutes = (totalSeconds % 3600) / 60;
-
-        if (hours > 0) {
-            return String.format("%d시간 %02d분", hours, minutes);
-        } else {
-            return String.format("%d분", minutes);
-        }
-    }
-
-    /**
-     * 기간 유형에 따른 시작 시간과 종료 시간을 계산합니다.
-     * 
-     * @param periodType "today", "week", "month", "all"
-     * @return [startDate, endDate] 배열 (startDate가 null이면 전체)
-     */
-    private LocalDateTime[] calculateTimeRange(String periodType) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startDate = null;
-        LocalDateTime endDate = now;
-
-        switch (periodType.toLowerCase()) {
-            case "today":
-                startDate = now.truncatedTo(ChronoUnit.DAYS); // 오늘 00:00:00
-                break;
-            case "week":
-                // 이번 주 월요일 00:00:00 (LocalDate를 사용한 후 다시 LocalDateTime으로 변환)
-                startDate = now.toLocalDate().with(java.time.DayOfWeek.MONDAY).atStartOfDay();
-                break;
-            case "month":
-                startDate = now.toLocalDate().withDayOfMonth(1).atStartOfDay(); // 이번 달 1일 00:00:00
-                break;
-            case "all":
-            default:
-                // startDate = null; (전체 조회, 기본값)
-                break;
-        }
-
-        return new LocalDateTime[] { startDate, endDate };
-    }
-
-    /**
-     * [2단계 기능] 특정 videoId에 해당하는 모든 시청 기록을 삭제합니다.
-     * 
-     * @param videoId 삭제할 영상의 ID
-     */
-    @Transactional // 데이터 변경이 발생하므로 @Transactional 어노테이션 필수
+    // 특정 videoId에 해당하는 모든 시청 기록을 삭제합니다.
+    @Transactional
     public void deleteVideoProgress(String videoId) {
-        // Repository에서 videoId를 기준으로 모든 기록을 찾아 삭제합니다.
         repository.deleteByVideoId(videoId);
     }
 }

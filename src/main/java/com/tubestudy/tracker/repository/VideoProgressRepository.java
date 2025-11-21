@@ -7,8 +7,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 // <엔티티 타입, ID 타입>
-public interface VideoProgressRepository extends JpaRepository<VideoProgress, String> {
+public interface VideoProgressRepository extends JpaRepository<VideoProgress, Long> {
     // findById, findAll, save 등은 JpaRepository에서 이미 제공됩니다.
+    Optional<VideoProgress> findByVideoId(String videoId);
+
     // 가장 최근 동기화된 시간을 기준으로 최상위(Top) 1개의 영상을 찾습니다.
     Optional<VideoProgress> findTopByOrderByLastSyncedAtDesc();
 
@@ -20,4 +22,5 @@ public interface VideoProgressRepository extends JpaRepository<VideoProgress, St
 
     // videoId로 모든 기록 삭제합니다.
     void deleteByVideoId(String videoId);
+
 }
