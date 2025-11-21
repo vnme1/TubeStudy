@@ -162,6 +162,84 @@
               ></div>
             </div>
           </div>
+
+          <!-- 학습 스트릭 섹션 -->
+          <div class="grid grid-cols-2 gap-4 mt-4">
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <h4 class="text-sm text-gray-400 font-bold uppercase mb-2">🔥 연속 학습일</h4>
+              <div class="text-3xl font-black text-red-500" id="current-streak">0</div>
+              <p class="text-xs text-gray-500 mt-1">일</p>
+            </div>
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <h4 class="text-sm text-gray-400 font-bold uppercase mb-2">⭐ 최장 기록</h4>
+              <div class="text-3xl font-black text-orange-500" id="longest-streak">0</div>
+              <p class="text-xs text-gray-500 mt-1">일</p>
+            </div>
+          </div>
+
+          <div class="mt-4 bg-[#1f1f1f] p-4 rounded-lg border border-[#272727] text-sm">
+            <p class="text-gray-400">
+              마지막 학습: <span id="last-study-date" class="text-white font-semibold">-</span>
+            </p>
+          </div>
+        </section>
+
+        <!-- 📈 고급 통계 -->
+        <section class="mb-10 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
+            📈 고급 통계
+          </h2>
+
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <!-- 누적 학습 시간 -->
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <h4 class="text-xs text-gray-400 font-bold uppercase mb-2">누적 학습</h4>
+              <div class="text-2xl font-black text-red-500" id="total-study-hours">0시간</div>
+              <p class="text-xs text-gray-500 mt-1">전체</p>
+            </div>
+
+            <!-- 주간 학습 시간 -->
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <h4 class="text-xs text-gray-400 font-bold uppercase mb-2">이번 주</h4>
+              <div class="text-2xl font-black text-orange-500" id="weekly-study-hours">0시간</div>
+              <p class="text-xs text-gray-500 mt-1">학습</p>
+            </div>
+
+            <!-- 월간 학습 시간 -->
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <h4 class="text-xs text-gray-400 font-bold uppercase mb-2">이번 달</h4>
+              <div class="text-2xl font-black text-yellow-500" id="monthly-study-hours">0시간</div>
+              <p class="text-xs text-gray-500 mt-1">학습</p>
+            </div>
+          </div>
+
+          <!-- 패턴 분석 -->
+          <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727] space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">🎯 가장 생산적인 요일</span>
+              <span class="text-white font-bold" id="most-productive-day">정보 없음</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">⏰ 가장 생산적인 시간</span>
+              <span class="text-white font-bold" id="most-productive-hour">정보 없음</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">📹 총 시청 영상</span>
+              <span class="text-white font-bold" id="total-videos">0개</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">⏱️ 평균 세션</span>
+              <span class="text-white font-bold" id="avg-session">0분</span>
+            </div>
+          </div>
+
+          <!-- 요일별 학습 시간 (바 차트 스타일) -->
+          <div class="mt-6 bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+            <h3 class="text-lg font-bold mb-4 text-gray-300">📅 최근 7일 학습 시간</h3>
+            <div class="space-y-3" id="daily-stats-container">
+              <!-- 동적으로 생성됨 -->
+            </div>
+          </div>
         </section>
 
         <!-- 알림 설정 -->
@@ -395,13 +473,167 @@
       });
 
       // =========================================================
-      // 7. 페이지 로드 시 호출
+      // 7. 학습 스트릭 데이터 불러오기
+      // =========================================================
+      async function updateStudyStreak() {
+        try {
+          const response = await fetch('http://localhost:18085/api/tracker/streak');
+          if (!response.ok) throw new Error('Streak fetch failed');
+          
+          const streak = await response.json();
+          
+          document.getElementById('current-streak').textContent = streak.currentStreak || 0;
+          document.getElementById('longest-streak').textContent = streak.longestStreak || 0;
+
+          if (streak.lastStudyDate) {
+            const date = new Date(streak.lastStudyDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            let dateText = date.toLocaleDateString('ko-KR');
+            const dateOnly = new Date(date);
+            dateOnly.setHours(0, 0, 0, 0);
+
+            if (dateOnly.getTime() === today.getTime()) {
+              dateText = '오늘';
+            } else if (dateOnly.getTime() === yesterday.getTime()) {
+              dateText = '어제';
+            }
+
+            document.getElementById('last-study-date').textContent = dateText;
+          }
+
+          // 알림 표시 (Notification API + 토스트 메시지)
+          if (streak.shouldNotify && streak.notificationMessage) {
+            showStreakNotification(streak.notificationMessage, streak.notificationType);
+          }
+        } catch (error) {
+          console.error('Failed to fetch streak:', error);
+        }
+      }
+
+      // =========================================================
+      // 스트릭 알림 함수 (Notification API + 토스트)
+      // =========================================================
+      function showStreakNotification(message, type) {
+        // 1. 토스트 메시지 표시 (UI에 항상 표시)
+        showMessage(message, true);
+
+        // 2. Browser Notification API (권한이 있으면 표시)
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const options = {
+            icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/fire.svg',
+            badge: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/star.svg',
+            tag: 'streak-notification',
+            requireInteraction: false,
+            sound: true,
+          };
+
+          if (type === 'milestone') {
+            options.icon = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/trophy.svg';
+          } else if (type === 'encouragement') {
+            options.icon = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/heart.svg';
+          }
+
+          new Notification('🎉 TubeStudy 알림', options).then((notification) => {
+            setTimeout(() => notification.close(), 5000);
+          });
+        } else if ('Notification' in window && Notification.permission !== 'denied') {
+          // 첫 사용자이면 권한 요청
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              new Notification('🎉 TubeStudy', { body: message }).then((n) => {
+                setTimeout(() => n.close(), 5000);
+              });
+            }
+          });
+        }
+      }
+
+      // Notification 권한 요청 함수
+      function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+      }
+
+      // =========================================================
+      // 9. 고급 통계 업데이트
+      // =========================================================
+      async function updateAnalytics() {
+        try {
+          const response = await fetch('http://localhost:18085/api/tracker/analytics');
+          if (!response.ok) throw new Error('Analytics fetch failed');
+          
+          const analytics = await response.json();
+
+          // 시간 포맷팅 함수
+          const formatSeconds = (seconds) => {
+            const hours = Math.floor(seconds / 3600);
+            return hours + '시간';
+          };
+
+          // 시간별 통계 업데이트
+          document.getElementById('total-study-hours').textContent = formatSeconds(analytics.totalStudyTimeSeconds);
+          document.getElementById('weekly-study-hours').textContent = formatSeconds(analytics.weeklyStudyTimeSeconds);
+          document.getElementById('monthly-study-hours').textContent = formatSeconds(analytics.monthlyStudyTimeSeconds);
+
+          // 패턴 분석 업데이트
+          document.getElementById('most-productive-day').textContent = analytics.mostProductiveDay || '정보 없음';
+          document.getElementById('most-productive-hour').textContent = (analytics.mostProductiveHour || 0) + '시';
+          document.getElementById('total-videos').textContent = (analytics.totalWatchedVideos || 0) + '개';
+          document.getElementById('avg-session').textContent = Math.round(analytics.averageSessionDuration / 60) + '분';
+
+          // 요일별 학습 시간 차트
+          const container = document.getElementById('daily-stats-container');
+          container.innerHTML = '';
+
+          if (analytics.dailyStats && analytics.dailyStats.length > 0) {
+            const maxTime = Math.max(...analytics.dailyStats.map(d => d.studyTimeSeconds || 0), 1);
+
+            analytics.dailyStats.forEach(day => {
+              const percentage = (day.studyTimeSeconds / maxTime) * 100;
+              const hours = Math.floor(day.studyTimeSeconds / 3600);
+              const minutes = Math.floor((day.studyTimeSeconds % 3600) / 60);
+
+              const dayHtml = `
+                <div class="flex items-center gap-3">
+                  <div class="w-16 text-sm font-semibold text-gray-400">${day.dayOfWeek}</div>
+                  <div class="flex-1 bg-gray-700 h-8 rounded-lg overflow-hidden">
+                    <div
+                      class="h-full bg-gradient-to-r from-red-600 to-orange-500 transition-all"
+                      style="width: ${percentage}%"
+                    ></div>
+                  </div>
+                  <div class="w-20 text-sm text-right text-gray-400">
+                    ${hours}h ${minutes}m
+                  </div>
+                </div>
+              `;
+              container.innerHTML += dayHtml;
+            });
+          }
+        } catch (error) {
+          console.error('Failed to fetch analytics:', error);
+        }
+      }
+
+      // =========================================================
+      // 10. 페이지 로드 시 호출
       // =========================================================
       fetchCurrentSettings();
       updateWeeklyProgress();
+      updateStudyStreak();
+      updateAnalytics();
 
       // 10초마다 진행 상황 업데이트 (실시간 동기화)
-      setInterval(updateWeeklyProgress, 10000);
+      setInterval(() => {
+        updateWeeklyProgress();
+        updateStudyStreak();
+        updateAnalytics();
+      }, 10000);
     </script>
   </body>
 </html>

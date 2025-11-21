@@ -5,8 +5,12 @@ import com.tubestudy.tracker.dto.SyncResponseDto;
 import com.tubestudy.tracker.dto.VideoProgressDto;
 import com.tubestudy.tracker.dto.CourseItemDto;
 import com.tubestudy.tracker.dto.DashboardStatsDto;
+import com.tubestudy.tracker.dto.StudyStreakDto;
+import com.tubestudy.tracker.dto.AnalyticsDto;
 import com.tubestudy.tracker.entity.VideoProgress;
+import com.tubestudy.tracker.entity.StudyStreak;
 import com.tubestudy.tracker.repository.VideoProgressRepository;
+import com.tubestudy.tracker.repository.StudyStreakRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,15 +21,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Comparator;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.time.temporal.ChronoUnit;
 // import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
 @RequiredArgsConstructor
 public class TrackerService {
 
     private final VideoProgressRepository repository;
+    private final StudyStreakRepository studyStreakRepository;
     private final SettingsService settingsService;
 
     // ========================================================
@@ -97,7 +105,10 @@ public class TrackerService {
 
         // (JPA의 변경 감지(Dirty Checking) 덕분에 기존 기록 업데이트 시에는 별도 save 호출 불필요)
 
-        // ************ ✅ 5. 응답 DTO 생성 (기존 로직 유지) ************
+        // ✅ 5. 스트릭 업데이트 (오늘 학습이 감지되었을 때)
+        updateStudyStreak();
+
+        // ************ ✅ 6. 응답 DTO 생성 (기존 로직 유지) ************
         if (distractionMessage != null) {
             return SyncResponseDto.builder()
                     .requiresNotification(true)
@@ -420,6 +431,211 @@ public class TrackerService {
 
         // 7일 이상은 간단히 날짜만 표시 (예: 2024-11-20)
         return pastTime.toLocalDate().toString();
+    }
+
+    // ========================================================
+    // [Gamification] 4. 학습 스트릭 관리
+    // ========================================================
+
+    /**
+     * 학습 스트릭을 업데이트합니다.
+     * 매번 학습이 감지될 때 호출되어 연속 학습일 수를 추적합니다.
+     */
+    @Transactional
+    public void updateStudyStreak() {
+        // ID = 1인 스트릭 레코드 조회 또는 생성
+        StudyStreak streak = studyStreakRepository.findById(1L).orElseGet(() -> {
+            StudyStreak newStreak = StudyStreak.builder()
+                    .currentStreak(0)
+                    .longestStreak(0)
+                    .lastStudyDate(null)
+                    .streakStartDate(null)
+                    .longestStreakDate(null)
+                    .streakBroken(false)
+                    .build();
+            return studyStreakRepository.save(newStreak);
+        });
+
+        // 스트릭 업데이트
+        streak.updateStreak();
+    }
+
+    /**
+     * 현재 학습 스트릭 정보를 반환합니다.
+     */
+    @Transactional(readOnly = true)
+    public StudyStreakDto getStudyStreak() {
+        StudyStreak streak = studyStreakRepository.findById(1L).orElseGet(() -> {
+            StudyStreak newStreak = StudyStreak.builder()
+                    .currentStreak(0)
+                    .longestStreak(0)
+                    .lastStudyDate(null)
+                    .streakStartDate(null)
+                    .longestStreakDate(null)
+                    .streakBroken(false)
+                    .build();
+            return studyStreakRepository.save(newStreak);
+        });
+
+        // 알림 로직 추가
+        String notificationMessage = null;
+        String notificationType = null;
+        boolean shouldNotify = false;
+
+        // 마일스톤 체크 (7일, 14일, 30일, 100일)
+        int currentStreak = streak.getCurrentStreak();
+        if (currentStreak == 7) {
+            notificationMessage = "🎉 축하합니다! 7일 연속 학습을 달성했어요!";
+            notificationType = "milestone";
+            shouldNotify = true;
+        } else if (currentStreak == 14) {
+            notificationMessage = "🔥 놀라워요! 14일 연속 학습 달성!";
+            notificationType = "milestone";
+            shouldNotify = true;
+        } else if (currentStreak == 30) {
+            notificationMessage = "⭐ 최고예요! 1개월 연속 학습! 당신은 학습 챔피언입니다!";
+            notificationType = "milestone";
+            shouldNotify = true;
+        } else if (currentStreak == 100) {
+            notificationMessage = "👑 전설이 되었어요! 100일 연속 학습 달성! 🏆";
+            notificationType = "milestone";
+            shouldNotify = true;
+        }
+
+        // 스트릭 끝남 감지
+        if (streak.isStreakBroken() && currentStreak == 1) {
+            notificationMessage = "💪 새로운 시작입니다! 오늘부터 다시 연속 학습을 시작하세요!";
+            notificationType = "encouragement";
+            shouldNotify = true;
+        }
+
+        return StudyStreakDto.builder()
+                .currentStreak(streak.getCurrentStreak())
+                .longestStreak(streak.getLongestStreak())
+                .lastStudyDate(streak.getLastStudyDate())
+                .streakStartDate(streak.getStreakStartDate())
+                .longestStreakDate(streak.getLongestStreakDate())
+                .streakBroken(streak.isStreakBroken())
+                .notificationMessage(notificationMessage)
+                .notificationType(notificationType)
+                .shouldNotify(shouldNotify)
+                .build();
+    }
+
+    // ========================================================
+    // [Advanced Analytics] 고급 통계 분석
+    // ========================================================
+    @Transactional(readOnly = true)
+    public AnalyticsDto getAnalytics() {
+        LocalDate today = LocalDate.now();
+        LocalDate weekAgo = today.minusDays(7);
+        LocalDate monthAgo = today.minusDays(30);
+
+        List<VideoProgress> allRecords = repository.findAll();
+
+        // 시간별 통계
+        long totalStudyTimeSeconds = (long) allRecords.stream()
+                .mapToDouble(VideoProgress::getStudyTimeSeconds)
+                .sum();
+
+        long weeklyStudyTimeSeconds = (long) allRecords.stream()
+                .filter(v -> !v.getLastSyncedAt().toLocalDate().isBefore(weekAgo))
+                .mapToDouble(VideoProgress::getStudyTimeSeconds)
+                .sum();
+
+        long monthlyStudyTimeSeconds = (long) allRecords.stream()
+                .filter(v -> !v.getLastSyncedAt().toLocalDate().isBefore(monthAgo))
+                .mapToDouble(VideoProgress::getStudyTimeSeconds)
+                .sum();
+
+        // 일별 통계 (최근 7일)
+        AnalyticsDto.DaylyAnalytics[] dailyStats = new AnalyticsDto.DaylyAnalytics[7];
+        for (int i = 0; i < 7; i++) {
+            LocalDate dayDate = today.minusDays(6 - i);
+            final LocalDate currentDay = dayDate;
+
+            long dayStudyTime = (long) allRecords.stream()
+                    .filter(v -> v.getLastSyncedAt().toLocalDate().equals(currentDay))
+                    .mapToDouble(VideoProgress::getStudyTimeSeconds)
+                    .sum();
+
+            long videoCount = allRecords.stream()
+                    .filter(v -> v.getLastSyncedAt().toLocalDate().equals(currentDay))
+                    .count();
+
+            String dayOfWeek = currentDay.getDayOfWeek().toString();
+            String koreanDay = translateDayOfWeek(dayOfWeek);
+
+            dailyStats[i] = AnalyticsDto.DaylyAnalytics.builder()
+                    .day(currentDay.toString())
+                    .dayOfWeek(koreanDay)
+                    .studyTimeSeconds(dayStudyTime)
+                    .videoCount((int) videoCount)
+                    .hasStudied(dayStudyTime > 0)
+                    .build();
+        }
+
+        // 가장 생산적인 요일 찾기
+        Map<String, Double> dayStudyMap = new HashMap<>();
+        String[] daysOfWeek = { "월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일" };
+        for (String day : daysOfWeek) {
+            dayStudyMap.put(day, 0.0);
+        }
+
+        for (VideoProgress v : allRecords) {
+            String dayOfWeek = translateDayOfWeek(v.getLastSyncedAt().toLocalDate().getDayOfWeek().toString());
+            dayStudyMap.put(dayOfWeek, dayStudyMap.getOrDefault(dayOfWeek, 0.0) + v.getStudyTimeSeconds());
+        }
+
+        String mostProductiveDay = dayStudyMap.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("정보 없음");
+
+        // 가장 생산적인 시간 찾기
+        Map<Integer, Double> hourStudyMap = new HashMap<>();
+        for (int h = 0; h < 24; h++) {
+            hourStudyMap.put(h, 0.0);
+        }
+
+        for (VideoProgress v : allRecords) {
+            int hour = v.getLastSyncedAt().getHour();
+            hourStudyMap.put(hour, hourStudyMap.getOrDefault(hour, 0.0) + v.getStudyTimeSeconds());
+        }
+
+        int mostProductiveHour = hourStudyMap.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(0);
+
+        // 평균 세션 시간
+        double averageSessionDuration = allRecords.isEmpty() ? 0
+                : totalStudyTimeSeconds / (double) allRecords.size();
+
+        return AnalyticsDto.builder()
+                .totalStudyTimeSeconds(totalStudyTimeSeconds)
+                .weeklyStudyTimeSeconds(weeklyStudyTimeSeconds)
+                .monthlyStudyTimeSeconds(monthlyStudyTimeSeconds)
+                .dailyStats(dailyStats)
+                .mostProductiveDay(mostProductiveDay)
+                .mostProductiveHour(mostProductiveHour)
+                .totalWatchedVideos(allRecords.size())
+                .averageSessionDuration(averageSessionDuration)
+                .build();
+    }
+
+    // 요일 번역 헬퍼 메서드
+    private String translateDayOfWeek(String dayOfWeek) {
+        return switch (dayOfWeek) {
+            case "MONDAY" -> "월요일";
+            case "TUESDAY" -> "화요일";
+            case "WEDNESDAY" -> "수요일";
+            case "THURSDAY" -> "목요일";
+            case "FRIDAY" -> "금요일";
+            case "SATURDAY" -> "토요일";
+            case "SUNDAY" -> "일요일";
+            default -> "정보 없음";
+        };
     }
 
     // 특정 videoId에 해당하는 모든 시청 기록을 삭제합니다.

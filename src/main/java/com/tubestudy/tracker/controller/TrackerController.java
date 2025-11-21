@@ -3,6 +3,8 @@ package com.tubestudy.tracker.controller;
 import com.tubestudy.tracker.dto.ContinueWatchingDto;
 import com.tubestudy.tracker.dto.VideoProgressDto;
 import com.tubestudy.tracker.dto.DashboardStatsDto;
+import com.tubestudy.tracker.dto.StudyStreakDto;
+import com.tubestudy.tracker.dto.AnalyticsDto;
 import com.tubestudy.tracker.service.TrackerService;
 import lombok.RequiredArgsConstructor;
 import com.tubestudy.tracker.dto.SyncResponseDto;
@@ -29,6 +31,22 @@ public class TrackerController {
 
         // Service 메서드에 periodType을 전달
         return trackerService.getDashboardStats(periodType);
+    }
+
+    // ********************************************
+    // 스트릭 조회 API
+    // ********************************************
+    @GetMapping("/streak")
+    public StudyStreakDto getStudyStreak() {
+        return trackerService.getStudyStreak();
+    }
+
+    // ********************************************
+    // 고급 통계 조회 API
+    // ********************************************
+    @GetMapping("/analytics")
+    public AnalyticsDto getAnalytics() {
+        return trackerService.getAnalytics();
     }
 
     // ********************************************

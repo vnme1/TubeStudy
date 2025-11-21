@@ -94,6 +94,15 @@
       >
         <h1 class="text-lg font-bold tracking-tight">My Learning Space</h1>
         <div class="flex items-center gap-4">
+          <!-- 스트릭 배지 -->
+          <a 
+            href="settings.html"
+            class="flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 px-3 py-1.5 rounded-full border border-red-500 transition cursor-pointer"
+          >
+            <span class="text-sm font-bold text-white">🔥</span>
+            <span class="text-xs font-bold text-white" id="streak-badge">0 Day</span>
+          </a>
+
           <div
             class="flex items-center gap-2 bg-[#272727] px-3 py-1.5 rounded-full border border-[#3f3f3f]"
           >
@@ -609,6 +618,65 @@
         });
       }
 
+      // =========================================================
+      // 6. 학습 스트릭 배지 업데이트
+      // =========================================================
+      async function updateStreakBadge() {
+        try {
+          const response = await fetch('http://localhost:18085/api/tracker/streak');
+          if (!response.ok) throw new Error('Streak fetch failed');
+          
+          const streak = await response.json();
+          const currentStreak = streak.currentStreak || 0;
+          const badge = document.getElementById('streak-badge');
+          
+          if (currentStreak > 0) {
+            badge.textContent = currentStreak === 1 ? '1 Day' : `${currentStreak} Days`;
+          } else {
+            badge.textContent = '0 Day';
+          }
+
+          // 알림 표시
+          if (streak.shouldNotify && streak.notificationMessage) {
+            showStreakNotificationBrowser(streak.notificationMessage, streak.notificationType);
+          }
+        } catch (error) {
+          console.error('Failed to fetch streak:', error);
+        }
+      }
+
+      // =========================================================
+      // 스트릭 알림 (Browser Notification API)
+      // =========================================================
+      function showStreakNotificationBrowser(message, type) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const options = {
+            icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/fire.svg',
+            badge: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/star.svg',
+            tag: 'streak-notification',
+            requireInteraction: false,
+          };
+
+          if (type === 'milestone') {
+            options.icon = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/trophy.svg';
+          } else if (type === 'encouragement') {
+            options.icon = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/heart.svg';
+          }
+
+          new Notification('🎉 TubeStudy', options).then((notification) => {
+            setTimeout(() => notification.close(), 5000);
+          });
+        } else if ('Notification' in window && Notification.permission !== 'denied') {
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              new Notification('🎉 TubeStudy', { body: message }).then((n) => {
+                setTimeout(() => n.close(), 5000);
+              });
+            }
+          });
+        }
+      }
+
       // 페이지 로드 시 모든 함수 실행
       fetchAndRenderDashboardData();
       fetchAndRenderCourses();
@@ -616,6 +684,10 @@
       setupSidebarNavigation();
       setupPeriodFiltering(); // 기간 필터링 설정 함수 호출
       setupDeleteButtons(); // 삭제 버튼 이벤트 설정 함수 호출 추가
+      updateStreakBadge(); // 스트릭 배지 업데이트
+
+      // 30초마다 스트릭 배지 업데이트 (자동 동기화)
+      setInterval(updateStreakBadge, 30000);
     </script>
   </body>
 </html>
