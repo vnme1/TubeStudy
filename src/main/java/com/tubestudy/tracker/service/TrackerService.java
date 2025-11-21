@@ -7,6 +7,7 @@ import com.tubestudy.tracker.dto.CourseItemDto;
 import com.tubestudy.tracker.dto.DashboardStatsDto;
 import com.tubestudy.tracker.dto.StudyStreakDto;
 import com.tubestudy.tracker.dto.AnalyticsDto;
+import com.tubestudy.tracker.dto.SettingsDto;
 import com.tubestudy.tracker.entity.VideoProgress;
 import com.tubestudy.tracker.entity.StudyStreak;
 import com.tubestudy.tracker.repository.VideoProgressRepository;
@@ -108,16 +109,36 @@ public class TrackerService {
         // ✅ 5. 스트릭 업데이트 (오늘 학습이 감지되었을 때)
         updateStudyStreak();
 
-        // ************ ✅ 6. 응답 DTO 생성 (기존 로직 유지) ************
-        if (distractionMessage != null) {
+        // ✅ 6. 설정에서 딴짓 알림 활성화 여부 확인
+        SettingsDto settings = settingsService.getSettings();
+        boolean distractionAlertEnabled = settings.isDistractionAlertEnabled();
+
+        // ************ ✅ 7. 응답 DTO 생성 (딴짓 설정 적용) ************
+        if (distractionMessage != null && distractionAlertEnabled) {
+            // 딴짓 감지 + 알림 활성화 → 알림 전송
             return SyncResponseDto.builder()
                     .requiresNotification(true)
                     .message(distractionMessage)
+                    .isDistraction(true)
+                    .distractionMessage(distractionMessage)
+                    .distractionAlertEnabled(true)
+                    .build();
+        } else if (distractionMessage != null) {
+            // 딴짓 감지 but 알림 비활성화 → 알림 미전송 (경고만 기록)
+            return SyncResponseDto.builder()
+                    .requiresNotification(false)
+                    .message("Distraction detected but notification is disabled.")
+                    .isDistraction(true)
+                    .distractionMessage(distractionMessage)
+                    .distractionAlertEnabled(false)
                     .build();
         } else {
+            // 정상 콘텐츠
             return SyncResponseDto.builder()
                     .requiresNotification(false)
                     .message("Sync successful.")
+                    .isDistraction(false)
+                    .distractionAlertEnabled(distractionAlertEnabled)
                     .build();
         }
     }
@@ -642,5 +663,15 @@ public class TrackerService {
     @Transactional
     public void deleteVideoProgress(String videoId) {
         repository.deleteByVideoId(videoId);
+    }
+
+    // 모든 학습 기록 및 관련 데이터를 삭제합니다.
+    @Transactional
+    public void clearAllStudyData() {
+        // VideoProgress 모두 삭제
+        repository.deleteAll();
+
+        // StudyStreak 모두 삭제
+        studyStreakRepository.deleteAll();
     }
 }

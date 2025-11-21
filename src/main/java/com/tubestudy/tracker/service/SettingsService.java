@@ -22,12 +22,18 @@ public class SettingsService {
         // ID 1번으로 조회하여 설정 레코드가 있는지 확인합니다.
         Settings settings = settingsRepository.findById(1L).orElseGet(() -> {
             // 없으면 기본값으로 새로운 Settings 엔티티를 생성하고 저장합니다.
-            Settings newSettings = Settings.builder().weeklyGoalHours(DEFAULT_GOAL_HOURS).build();
+            Settings newSettings = Settings.builder()
+                    .weeklyGoalHours(DEFAULT_GOAL_HOURS)
+                    .distractionAlertEnabled(true)
+                    .achievementAlertEnabled(true)
+                    .build();
             return settingsRepository.save(newSettings);
         });
 
         return SettingsDto.builder()
                 .weeklyGoalHours(settings.getWeeklyGoalHours())
+                .distractionAlertEnabled(settings.isDistractionAlertEnabled())
+                .achievementAlertEnabled(settings.isAchievementAlertEnabled())
                 .build();
     }
 
@@ -38,15 +44,26 @@ public class SettingsService {
     public SettingsDto updateGoal(SettingsDto dto) {
         // ID 1번으로 조회하거나, 없으면 기본값으로 생성합니다.
         Settings settings = settingsRepository.findById(1L).orElseGet(() -> {
-            return Settings.builder().weeklyGoalHours(DEFAULT_GOAL_HOURS).build();
+            return Settings.builder()
+                    .weeklyGoalHours(DEFAULT_GOAL_HOURS)
+                    .distractionAlertEnabled(true)
+                    .achievementAlertEnabled(true)
+                    .build();
         });
 
         // 목표 시간 업데이트
         settings.updateGoal(dto.getWeeklyGoalHours());
+
+        // 알림 설정 업데이트
+        settings.setDistractionAlertEnabled(dto.isDistractionAlertEnabled());
+        settings.setAchievementAlertEnabled(dto.isAchievementAlertEnabled());
+
         Settings updatedSettings = settingsRepository.save(settings);
 
         return SettingsDto.builder()
                 .weeklyGoalHours(updatedSettings.getWeeklyGoalHours())
+                .distractionAlertEnabled(updatedSettings.isDistractionAlertEnabled())
+                .achievementAlertEnabled(updatedSettings.isAchievementAlertEnabled())
                 .build();
     }
 }

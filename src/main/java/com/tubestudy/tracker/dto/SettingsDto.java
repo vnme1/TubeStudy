@@ -11,4 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SettingsDto {
     private int weeklyGoalHours;
+    private boolean distractionAlertEnabled;
+    private boolean achievementAlertEnabled;
 }

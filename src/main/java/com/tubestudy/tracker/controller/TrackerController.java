@@ -6,13 +6,17 @@ import com.tubestudy.tracker.dto.DashboardStatsDto;
 import com.tubestudy.tracker.dto.StudyStreakDto;
 import com.tubestudy.tracker.dto.AnalyticsDto;
 import com.tubestudy.tracker.service.TrackerService;
+import com.tubestudy.tracker.service.CsvExportService;
 import lombok.RequiredArgsConstructor;
 import com.tubestudy.tracker.dto.SyncResponseDto;
 import org.springframework.web.bind.annotation.*;
 import com.tubestudy.tracker.dto.CourseItemDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import java.util.List;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/tracker")
@@ -21,6 +25,7 @@ import java.util.List;
 public class TrackerController {
 
     private final TrackerService trackerService;
+    private final CsvExportService csvExportService;
 
     // ********************************************
     // 통계 정보 조회 API (기간 필터링 적용) - 1단계 수정
@@ -62,6 +67,44 @@ public class TrackerController {
     public ResponseEntity<Void> deleteVideoProgress(@PathVariable String videoId) { // ✅ 새로 추가
         trackerService.deleteVideoProgress(videoId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content 반환
+    }
+
+    // ********************************************
+    // CSV 내보내기 API
+    // ********************************************
+    /**
+     * 모든 학습 기록을 CSV 파일로 내보냅니다.
+     * 
+     * @return CSV 파일 다운로드
+     */
+    @GetMapping("/export/csv")
+    public ResponseEntity<String> exportCsv() {
+        try {
+            String csvContent = csvExportService.exportStudyRecordsAsCsv();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "study_records.csv");
+            headers.add("Content-Encoding", "UTF-8");
+
+            return new ResponseEntity<>(csvContent, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // ********************************************
+    // 전체 데이터 삭제 API
+    // ********************************************
+    /**
+     * 모든 학습 기록 및 관련 데이터를 삭제합니다.
+     * 
+     * @return 삭제 성공 응답
+     */
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<Void> clearAllStudyData() {
+        trackerService.clearAllStudyData();
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     // ********************************************
