@@ -1,249 +1,369 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TubeStudy - 학습 진도 관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
-        
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #0f0f0f; /* YouTube Dark Background */
-            color: #f1f1f1;
-        }
-        
-        /* 커스텀 스크롤바 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f0f0f; }
-        ::-webkit-scrollbar-thumb { background: #3f3f3f; border-radius: 4px; }
-        
-        /* 유튜브 스타일 진행바 */
-        .progress-bar-bg { background-color: #3f3f3f; }
-        .progress-bar-fill { background-color: #cc0000; } /* YouTube Red */
-        
-        .thumbnail-card { aspect-ratio: 16/9; }
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap");
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #0f0f0f; /* YouTube Dark Background */
+        color: #f1f1f1;
+      }
+
+      /* 커스텀 스크롤바 */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f0f0f;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #3f3f3f;
+        border-radius: 4px;
+      }
+
+      /* 유튜브 스타일 진행바 */
+      .progress-bar-bg {
+        background-color: #3f3f3f;
+      }
+      .progress-bar-fill {
+        background-color: #cc0000;
+      } /* YouTube Red */
+
+      .thumbnail-card {
+        aspect-ratio: 16/9;
+      }
     </style>
-</head>
-<body class="h-screen flex overflow-hidden">
+  </head>
+  <body class="h-screen flex overflow-hidden">
+    <aside
+      class="w-20 flex flex-col items-center py-6 bg-[#0f0f0f] border-r border-[#272727]"
+    >
+      <div class="mb-10 text-red-600 text-2xl">
+        <i class="fab fa-youtube"></i>
+      </div>
 
-    <aside class="w-20 flex flex-col items-center py-6 bg-[#0f0f0f] border-r border-[#272727]">
-        <div class="mb-10 text-red-600 text-2xl"><i class="fab fa-youtube"></i></div>
-        
-        <nav class="space-y-8 flex flex-col items-center w-full">
-            <button class="text-white text-xl relative group">
-                <i class="fas fa-home"></i>
-                <span class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50">대시보드</span>
-            </button>
-            <button class="text-white hover:text-red-500 transition text-xl relative group">
-                <i class="fas fa-chart-pie"></i>
-                <span class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50">통계</span>
-            </button>
-            <button class="text-white hover:text-red-500 transition text-xl relative group">
-                <i class="fas fa-list"></i>
-                <span class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50">재생목록</span>
-            </button>
-        </nav>
+      <nav class="space-y-8 flex flex-col items-center w-full">
+        <button class="text-white text-xl relative group">
+          <i class="fas fa-home"></i>
+          <span
+            class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50"
+            >대시보드</span
+          >
+        </button>
+        <button
+          class="text-white hover:text-red-500 transition text-xl relative group"
+        >
+          <i class="fas fa-chart-pie"></i>
+          <span
+            class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50"
+            >통계</span
+          >
+        </button>
+        <button
+          class="text-white hover:text-red-500 transition text-xl relative group"
+        >
+          <i class="fas fa-list"></i>
+          <span
+            class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50"
+            >재생목록</span
+          >
+        </button>
+      </nav>
 
-        <div class="mt-auto">
-            <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold">U</div>
+      <div class="mt-auto">
+        <div
+          class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold"
+        >
+          U
         </div>
+      </div>
     </aside>
 
     <main class="flex-1 flex flex-col overflow-hidden">
-        
-        <header class="h-16 flex items-center justify-between px-8 border-b border-[#272727]">
-            <h1 class="text-lg font-bold tracking-tight">My Learning Space</h1>
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2 bg-[#272727] px-3 py-1.5 rounded-full border border-[#3f3f3f]">
-                    <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </span>
-                    <span class="text-xs font-medium text-gray-300">Extension Connected</span>
-                </div>
-                <button class="text-gray-400 hover:text-white transition"><i class="fas fa-cog"></i></button>
-            </div>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-8"> 
-            
-            <section class="mb-10">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <i class="fas fa-history text-red-500"></i> Continue Watching
-                </h2>
-                
-                <div id="continue-card" class="bg-[#1f1f1f] rounded-xl p-6 flex gap-6 border border-[#272727] hover:border-[#3f3f3f] transition group cursor-pointer">
-                    <a id="continue-link" href="#" class="w-80 thumbnail-card bg-black rounded-lg relative overflow-hidden flex-shrink-0">
-                        <img id="thumbnail-img" src="https://img.youtube.com/vi/tEii94C8hYk/maxresdefault.jpg" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition" alt="Thumbnail">
-                        <div id="video-duration" class="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded">24:15</div>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <div class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg">
-                                <i class="fas fa-play ml-1"></i>
-                            </div>
-                        </div>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
-                            <div id="progress-bar-fill" class="h-full bg-red-600 w-[65%]"></div>
-                        </div>
-                    </a>
-
-                    <div class="flex-1 flex flex-col justify-center">
-                        <div id="channel-name" class="text-sm text-gray-400 mb-1">Spring Boot 3.0 Master Class</div>
-                        <h3 id="video-title" class="text-2xl font-bold mb-2 text-white group-hover:text-red-500 transition">24. REST API 설계 및 구현하기</h3>
-                        <p class="text-gray-500 text-sm mb-6 line-clamp-2">이번 시간에는 Spring Web MVC를 사용하여 RESTful API를 설계하는 원칙과 실제 코드 구현 방법에 대해 알아봅니다. @RestController 어노테이션과...</p>
-                        
-                        <div class="flex items-center gap-6">
-                            <div>
-                                <div class="text-xs text-gray-400 mb-1">Current Progress</div>
-                                <div class="text-lg font-bold">
-                                    <span id="progress-percentage">65</span>% <span class="text-sm text-gray-500 font-normal">/ 100%</span>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="text-xs text-gray-400 mb-1">Remaining</div>
-                                <div id="remaining-time" class="text-lg font-bold">08:15</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                <div id="courses-section" class="lg:col-span-2"> 
-                    <h2 class="text-xl font-bold mb-4">My Courses</h2>
-                    <div id="course-list-container" class="space-y-4">
-                        <p class="text-gray-500 p-4">데이터를 불러오는 중입니다...</p>
-                    </div>
-                </div>
-
-                <div id="stats-section" class="lg:col-span-1 space-y-6"> 
-                    
-                    <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
-                        <div class="mb-4">
-                            <select id="period-selector" class="bg-[#1f1f1f] border border-[#3f3f3f] text-sm rounded-lg p-2.5 text-white focus:ring-red-500 focus:border-red-500">
-                                <option value="all">전체 누적</option>
-                                <option value="today">오늘</option>
-                                <option value="week">이번 주</option>
-                                <option value="month">이번 달</option>
-                            </select>
-                        </div>
-                        <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">Weekly Study Time (Total)</h3>
-                        <div class="flex items-end gap-2 mb-2">
-                            <span id="total-study-time" class="text-2xl font-black text-white">00시간 00분</span>
-                        </div>
-                        <div class="w-full bg-gray-700 h-2 rounded-full mt-4 overflow-hidden">
-                            <div id="week-goal-bar" class="h-full bg-gradient-to-r from-red-600 to-orange-500 w-[0%]"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2 text-right">
-                            주간 목표의 <span id="week-goal-percentage">0</span>% 달성
-                        </p>
-                    </div>
-
-                    <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
-                        <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">Subject Distribution</h3>
-                        <div id="subject-distribution-list" class="space-y-3">
-                            <p class="text-gray-500">데이터를 불러오는 중입니다...</p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
+      <header
+        class="h-16 flex items-center justify-between px-8 border-b border-[#272727]"
+      >
+        <h1 class="text-lg font-bold tracking-tight">My Learning Space</h1>
+        <div class="flex items-center gap-4">
+          <div
+            class="flex items-center gap-2 bg-[#272727] px-3 py-1.5 rounded-full border border-[#3f3f3f]"
+          >
+            <span class="relative flex h-2 w-2">
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2 w-2 bg-red-500"
+              ></span>
+            </span>
+            <span class="text-xs font-medium text-gray-300"
+              >Extension Connected</span
+            >
+          </div>
+          
+          <a href="settings.html" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-cog"></i>
+          </a>
         </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-8">
+        <section class="mb-10">
+          <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i class="fas fa-history text-red-500"></i> Continue Watching
+          </h2>
+
+          <div
+            id="continue-card"
+            class="bg-[#1f1f1f] rounded-xl p-6 flex gap-6 border border-[#272727] hover:border-[#3f3f3f] transition group cursor-pointer"
+          >
+            <a
+              id="continue-link"
+              href="#"
+              class="w-80 thumbnail-card bg-black rounded-lg relative overflow-hidden flex-shrink-0"
+            >
+              <img
+                id="thumbnail-img"
+                src="https://img.youtube.com/vi/tEii94C8hYk/maxresdefault.jpg"
+                class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition"
+                alt="Thumbnail"
+              />
+              <div
+                id="video-duration"
+                class="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 rounded"
+              >
+                24:15
+              </div>
+              <div
+                class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+              >
+                <div
+                  class="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white shadow-lg"
+                >
+                  <i class="fas fa-play ml-1"></i>
+                </div>
+              </div>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-600">
+                <div
+                  id="progress-bar-fill"
+                  class="h-full bg-red-600 w-[65%]"
+                ></div>
+              </div>
+            </a>
+
+            <div class="flex-1 flex flex-col justify-center">
+              <div id="channel-name" class="text-sm text-gray-400 mb-1">
+                Spring Boot 3.0 Master Class
+              </div>
+              <h3
+                id="video-title"
+                class="text-2xl font-bold mb-2 text-white group-hover:text-red-500 transition"
+              >
+                24. REST API 설계 및 구현하기
+              </h3>
+              <p class="text-gray-500 text-sm mb-6 line-clamp-2">
+                이번 시간에는 Spring Web MVC를 사용하여 RESTful API를 설계하는
+                원칙과 실제 코드 구현 방법에 대해 알아봅니다. @RestController
+                어노테이션과...
+              </p>
+
+              <div class="flex items-center gap-6">
+                <div>
+                  <div class="text-xs text-gray-400 mb-1">Current Progress</div>
+                  <div class="text-lg font-bold">
+                    <span id="progress-percentage">65</span>%
+                    <span class="text-sm text-gray-500 font-normal"
+                      >/ 100%</span
+                    >
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-400 mb-1">Remaining</div>
+                  <div id="remaining-time" class="text-lg font-bold">08:15</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div id="courses-section" class="lg:col-span-2">
+            <h2 class="text-xl font-bold mb-4">My Courses</h2>
+            <div id="course-list-container" class="space-y-4">
+              <p class="text-gray-500 p-4">데이터를 불러오는 중입니다...</p>
+            </div>
+          </div>
+
+          <div id="stats-section" class="lg:col-span-1 space-y-6">
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <div class="mb-4">
+                <select
+                  id="period-selector"
+                  class="bg-[#1f1f1f] border border-[#3f3f3f] text-sm rounded-lg p-2.5 text-white focus:ring-red-500 focus:border-red-500"
+                >
+                  <option value="all">전체 누적</option>
+                  <option value="today">오늘</option>
+                  <option value="week">이번 주</option>
+                  <option value="month">이번 달</option>
+                </select>
+              </div>
+              <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">
+                Weekly Study Time (Total)
+              </h3>
+              <div class="flex items-end gap-2 mb-2">
+                <span
+                  id="total-study-time"
+                  class="text-2xl font-black text-white"
+                  >00시간 00분</span
+                >
+              </div>
+              <div
+                class="w-full bg-gray-700 h-2 rounded-full mt-4 overflow-hidden"
+              >
+                <div
+                  id="week-goal-bar"
+                  class="h-full bg-gradient-to-r from-red-600 to-orange-500 w-[0%]"
+                ></div>
+              </div>
+              <p class="text-xs text-gray-500 mt-2 text-right">
+                주간 목표의 <span id="week-goal-percentage">0</span>% 달성
+              </p>
+            </div>
+
+            <div class="bg-[#1f1f1f] p-6 rounded-xl border border-[#272727]">
+              <h3 class="text-gray-400 text-sm font-bold uppercase mb-4">
+                Subject Distribution
+              </h3>
+              <div id="subject-distribution-list" class="space-y-3">
+                <p class="text-gray-500">데이터를 불러오는 중입니다...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
     <script>
-        const CONTINUE_API_URL = "http://localhost:8085/api/tracker/dashboard/continue";
-        const COURSES_API_URL = "http://localhost:8085/api/tracker/dashboard/courses";
-        const STATS_API_URL = "http://localhost:8085/api/tracker/dashboard/stats"; 
+      const CONTINUE_API_URL =
+        "http://localhost:18085/api/tracker/dashboard/continue";
+      const COURSES_API_URL =
+        "http://localhost:18085/api/tracker/dashboard/courses";
+      const STATS_API_URL = "http://localhost:18085/api/tracker/dashboard/stats";
 
-        // 초를 시간 형식(mm:ss)으로 포맷하는 헬퍼 함수
-        function formatSecondsToTime(seconds) {
-            if (seconds < 0) seconds = 0; 
-            const minutes = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      // 초를 시간 형식(mm:ss)으로 포맷하는 헬퍼 함수
+      function formatSecondsToTime(seconds) {
+        if (seconds < 0) seconds = 0;
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(
+          2,
+          "0"
+        )}`;
+      }
+
+      // 시간 문자열 ("mm:ss")을 초로 변환하는 헬퍼 함수
+      function parseTime(timeString) {
+        if (!timeString) return 0;
+        const parts = timeString.split(":").map(Number);
+        return parts[0] * 60 + (parts[1] || 0);
+      }
+
+      // =========================================================
+      // 1. 이어보기 카드 렌더링 함수
+      // =========================================================
+      async function fetchAndRenderDashboardData() {
+        try {
+          const response = await fetch(CONTINUE_API_URL);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
+          const data = await response.json();
+
+          if (!data || !data.videoId) {
+            document.getElementById("continue-card").innerHTML =
+              '<p class="text-center text-gray-500 p-10">아직 시청 기록이 없습니다. 유튜브에서 학습을 시작해 보세요! 🚀</p>';
+            return;
+          }
+
+          document.getElementById("continue-link").href = data.continueWatchUrl;
+          document.getElementById("thumbnail-img").src = data.thumbnailUrl;
+          document.getElementById("video-duration").innerText =
+            data.totalDurationFormatted;
+          document.getElementById("channel-name").innerText = data.channel;
+          document.getElementById("video-title").innerText = data.title;
+
+          const percentage = data.percentage;
+          document.getElementById("progress-percentage").innerText = percentage;
+          document.getElementById(
+            "progress-bar-fill"
+          ).style.width = `${percentage}%`;
+
+          const totalSeconds = parseTime(data.totalDurationFormatted);
+          const currentSeconds = parseTime(data.lastProgressTimeFormatted);
+          const remainingSeconds = totalSeconds - currentSeconds;
+          document.getElementById("remaining-time").innerText =
+            formatSecondsToTime(remainingSeconds);
+        } catch (error) {
+          console.error("대시보드 데이터를 불러오는 중 오류 발생:", error);
+          document.getElementById("continue-card").innerHTML =
+            '<p class="text-center text-red-500 p-10">데이터 로드 실패. 백엔드 서버(18085)가 실행 중인지 확인하세요. 🔴</p>';
         }
-        
-        // 시간 문자열 ("mm:ss")을 초로 변환하는 헬퍼 함수
-        function parseTime(timeString) {
-            if (!timeString) return 0;
-            const parts = timeString.split(':').map(Number);
-            return parts[0] * 60 + (parts[1] || 0);
-        }
-        
-        // =========================================================
-        // 1. 이어보기 카드 렌더링 함수
-        // =========================================================
-        async function fetchAndRenderDashboardData() {
-            try {
-                const response = await fetch(CONTINUE_API_URL);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const data = await response.json();
-                
-                if (!data || !data.videoId) {
-                    document.getElementById('continue-card').innerHTML = 
-                        '<p class="text-center text-gray-500 p-10">아직 시청 기록이 없습니다. 유튜브에서 학습을 시작해 보세요! 🚀</p>';
-                    return;
-                }
+      }
 
-                document.getElementById('continue-link').href = data.continueWatchUrl;
-                document.getElementById('thumbnail-img').src = data.thumbnailUrl;
-                document.getElementById('video-duration').innerText = data.totalDurationFormatted;
-                document.getElementById('channel-name').innerText = data.channel;
-                document.getElementById('video-title').innerText = data.title;
-                
-                const percentage = data.percentage;
-                document.getElementById('progress-percentage').innerText = percentage;
-                document.getElementById('progress-bar-fill').style.width = `${percentage}%`;
+      // =========================================================
+      // 2. 코스 목록 렌더링 함수
+      // =========================================================
+      function createCourseListItem(course) {
+        const isCompleted = course.percentage >= 100;
+        const progressColor = isCompleted ? "bg-green-500" : "bg-red-600";
+        const progressText = isCompleted
+          ? "강의 완료"
+          : `${course.percentage}%`;
+        const thumbnailUrl = `https://img.youtube.com/vi/${course.videoId}/mqdefault.jpg`;
 
-                const totalSeconds = parseTime(data.totalDurationFormatted);
-                const currentSeconds = parseTime(data.lastProgressTimeFormatted);
-                const remainingSeconds = totalSeconds - currentSeconds;
-                document.getElementById('remaining-time').innerText = formatSecondsToTime(remainingSeconds);
-
-            } catch (error) {
-                console.error("대시보드 데이터를 불러오는 중 오류 발생:", error);
-                document.getElementById('continue-card').innerHTML = 
-                    '<p class="text-center text-red-500 p-10">데이터 로드 실패. 백엔드 서버(8085)가 실행 중인지 확인하세요. 🔴</p>';
-            }
-        }
-        
-        // =========================================================
-        // 2. 코스 목록 렌더링 함수
-        // =========================================================
-        function createCourseListItem(course) {
-            const isCompleted = course.percentage >= 100;
-            const progressColor = isCompleted ? 'bg-green-500' : 'bg-red-600';
-            const progressText = isCompleted ? '강의 완료' : `${course.percentage}%`;
-            const thumbnailUrl = `https://img.youtube.com/vi/${course.videoId}/mqdefault.jpg`;
-
-            // data-videoid 속성을 추가하여 이 버튼이 어떤 비디오를 삭제할지 알게 합니다.
-            return `
+        // data-videoid 속성을 추가하여 이 버튼이 어떤 비디오를 삭제할지 알게 합니다.
+        return `
                 <div class="bg-[#1f1f1f] p-4 rounded-lg flex items-center gap-4 border border-[#272727] hover:bg-[#272727] transition group relative">
                     
-                    <a href="${course.continueWatchUrl}" target="_blank" class="flex-1 flex items-center gap-4">
+                    <a href="${
+                      course.continueWatchUrl
+                    }" target="_blank" class="flex-1 flex items-center gap-4">
                         <div class="w-32 thumbnail-card bg-gray-800 rounded relative overflow-hidden flex-shrink-0">
                             <img src="${thumbnailUrl}" class="w-full h-full object-cover" alt="Thumbnail">
                             <div class="absolute bottom-0 w-full h-1 bg-gray-600">
-                                <div class="h-full ${progressColor}" style="width: ${course.percentage}%"></div>
+                                <div class="h-full ${progressColor}" style="width: ${
+          course.percentage
+        }%"></div>
                             </div>
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-bold text-white group-hover:text-red-500 transition line-clamp-2">${course.title}</h4>
+                            <h4 class="font-bold text-white group-hover:text-red-500 transition line-clamp-2">${
+                              course.title
+                            }</h4>
                             <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                                <span><i class="fas fa-list-ul mr-1"></i> ${course.channel}</span>
+                                <span><i class="fas fa-list-ul mr-1"></i> ${
+                                  course.channel
+                                }</span>
                                 <span>•</span>
-                                <span>마지막 학습: ${course.lastProgressTimeAgo}</span>
+                                <span>마지막 학습: ${
+                                  course.lastProgressTimeAgo
+                                }</span>
                             </div>
                         </div>
                     </a>
                     
                     <div class="text-right flex items-center gap-4 flex-shrink-0">
-                        <div class="text-xl font-bold ${isCompleted ? 'text-green-500' : 'text-red-500'}">${progressText}</div>
+                        <div class="text-xl font-bold ${
+                          isCompleted ? "text-green-500" : "text-red-500"
+                        }">${progressText}</div>
                         
                         <button 
                             class="delete-button text-gray-500 hover:text-red-600 transition p-2 rounded-full hover:bg-gray-700"
@@ -255,186 +375,209 @@
                     </div>
                 </div>
             `;
-        }
-        
-        async function fetchAndRenderCourses() {
-            const container = document.getElementById('course-list-container');
-            if (!container) return;
-            
-            try {
-                const response = await fetch(COURSES_API_URL);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                
-                const courses = await response.json();
-                
-                if (courses.length === 0) {
-                    container.innerHTML = '<p class="text-gray-500 p-4">아직 시청 기록이 없습니다. 유튜브 영상을 시청하면 여기에 목록이 표시됩니다.</p>';
-                    return;
-                }
+      }
 
-                container.innerHTML = courses.map(createCourseListItem).join('');
-                
-            } catch (error) {
-                console.error("코스 목록을 불러오는 중 오류 발생:", error);
-                container.innerHTML = '<p class="text-red-500 p-4">코스 목록 로드 실패. 백엔드 서버 확인. 🔴</p>';
-            }
-        }
+      async function fetchAndRenderCourses() {
+        const container = document.getElementById("course-list-container");
+        if (!container) return;
 
-        // =========================================================
-        // 3. 통계 렌더링 함수
-        // =========================================================
-        function createSubjectListItem(stat) {
-            // Tailwind CSS에서 동적으로 클래스 이름을 생성할 수 없으므로, 문자열로 처리
-            return `
+        try {
+          const response = await fetch(COURSES_API_URL);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
+
+          const courses = await response.json();
+
+          if (courses.length === 0) {
+            container.innerHTML =
+              '<p class="text-gray-500 p-4">아직 시청 기록이 없습니다. 유튜브 영상을 시청하면 여기에 목록이 표시됩니다.</p>';
+            return;
+          }
+
+          container.innerHTML = courses.map(createCourseListItem).join("");
+        } catch (error) {
+          console.error("코스 목록을 불러오는 중 오류 발생:", error);
+          container.innerHTML =
+            '<p class="text-red-500 p-4">코스 목록 로드 실패. 백엔드 서버 확인. 🔴</p>';
+        }
+      }
+
+      // =========================================================
+      // 3. 통계 렌더링 함수
+      // =========================================================
+      function createSubjectListItem(stat) {
+        // Tailwind CSS에서 동적으로 클래스 이름을 생성할 수 없으므로, 문자열로 처리
+        return `
                 <div class="flex justify-between text-sm">
                     <span class="text-white"><i class="fas fa-circle text-${stat.color} text-[8px] mr-2"></i>${stat.subjectName}</span>
                     <span class="font-bold">${stat.percentage}%</span>
                 </div>
             `;
+      }
+
+      async function fetchAndRenderStats(periodType = "all") {
+        const url = `${STATS_API_URL}?periodType=${periodType}`;
+        try {
+          // 로딩 상태 표시 (선택적으로 추가)
+          document.getElementById("total-study-time").innerText = "...";
+          document.getElementById("subject-distribution-list").innerHTML =
+            '<p class="text-gray-500">로딩 중...</p>';
+
+          const response = await fetch(url);
+          if (!response.ok)
+            throw new Error(`HTTP error! status: ${response.status}`);
+          const stats = await response.json();
+
+          // 1. Total Study Time 업데이트
+          document.getElementById("total-study-time").innerText =
+            stats.totalStudyTimeFormatted;
+
+          // 2. Weekly Goal 업데이트
+          const goalPercentage = Math.round(stats.weekGoalPercentage);
+          document.getElementById("week-goal-percentage").innerText =
+            goalPercentage;
+          document.getElementById("week-goal-bar").style.width = `${Math.min(
+            100,
+            goalPercentage
+          )}%`;
+
+          // 3. Subject Distribution 업데이트
+          const listContainer = document.getElementById(
+            "subject-distribution-list"
+          );
+          if (stats.subjectStats && stats.subjectStats.length > 0) {
+            listContainer.innerHTML = stats.subjectStats
+              .map(createSubjectListItem)
+              .join("");
+          } else {
+            listContainer.innerHTML =
+              '<p class="text-gray-500">조회된 학습 기록이 없습니다.</p>';
+          }
+        } catch (error) {
+          console.error("통계 데이터를 불러오는 중 오류 발생:", error);
+          document.getElementById("total-study-time").innerText = "Error";
+          document.getElementById("subject-distribution-list").innerHTML =
+            '<p class="text-red-500">통계 로드 실패. 🔴</p>';
+        }
+      }
+
+      // =========================================================
+      // 4. 사이드바 탐색 기능 (스크롤)
+      // =========================================================
+
+      function setupSidebarNavigation() {
+        const mainContent = document.querySelector("main > div:last-child"); // 스크롤이 발생하는 컨테이너
+
+        // 1. 대시보드 버튼 (첫 번째 버튼)
+        const dashboardButton = document.querySelector(
+          "aside nav button:nth-child(1)"
+        );
+        dashboardButton.addEventListener("click", () => {
+          // 페이지 상단으로 이동
+          mainContent.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        // 2. 통계 버튼 (두 번째 버튼)
+        const statsButton = document.querySelector(
+          "aside nav button:nth-child(2)"
+        );
+        statsButton.addEventListener("click", () => {
+          // 스크롤 이동
+          document.getElementById("stats-section").scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+
+        // 3. 재생목록 버튼 (세 번째 버튼)
+        const coursesButton = document.querySelector(
+          "aside nav button:nth-child(3)"
+        );
+        coursesButton.addEventListener("click", () => {
+          // 스크롤 이동
+          document.getElementById("courses-section").scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        });
+      }
+
+      function setupPeriodFiltering() {
+        const selector = document.getElementById("period-selector");
+
+        // 드롭다운 변경 시 이벤트 리스너
+        selector.addEventListener("change", (event) => {
+          const selectedPeriod = event.target.value;
+          fetchAndRenderStats(selectedPeriod); // 선택된 기간으로 통계 API 재호출
+        });
+      }
+
+      // =========================================================
+      // 5. 기록 삭제 기능
+      // =========================================================
+
+      async function deleteVideo(videoId, videoTitle) {
+        if (
+          !confirm(`'${videoTitle}' 영상의 모든 학습 기록을 삭제하시겠습니까?`)
+        ) {
+          return; // 사용자가 취소함
         }
 
-        async function fetchAndRenderStats(periodType = 'all') { 
-            const url = `${STATS_API_URL}?periodType=${periodType}`;
-            try {
-                // 로딩 상태 표시 (선택적으로 추가)
-                document.getElementById('total-study-time').innerText = '...';
-                document.getElementById('subject-distribution-list').innerHTML = '<p class="text-gray-500">로딩 중...</p>';
+        const DELETE_API_URL = `http://localhost:18085/api/tracker/video/${videoId}`;
 
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const stats = await response.json();
+        try {
+          const response = await fetch(DELETE_API_URL, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
 
-                // 1. Total Study Time 업데이트
-                document.getElementById('total-study-time').innerText = stats.totalStudyTimeFormatted;
-                
-                // 2. Weekly Goal 업데이트
-                const goalPercentage = Math.round(stats.weekGoalPercentage);
-                document.getElementById('week-goal-percentage').innerText = goalPercentage;
-                document.getElementById('week-goal-bar').style.width = `${Math.min(100, goalPercentage)}%`;
-                
-                // 3. Subject Distribution 업데이트
-                const listContainer = document.getElementById('subject-distribution-list');
-                if (stats.subjectStats && stats.subjectStats.length > 0) {
-                    listContainer.innerHTML = stats.subjectStats.map(createSubjectListItem).join('');
-                } else {
-                    listContainer.innerHTML = '<p class="text-gray-500">조회된 학습 기록이 없습니다.</p>';
-                }
+          if (response.status === 204) {
+            alert(`'${videoTitle}' 기록이 성공적으로 삭제되었습니다.`);
 
-            } catch (error) {
-                console.error("통계 데이터를 불러오는 중 오류 발생:", error);
-                document.getElementById('total-study-time').innerText = 'Error';
-                document.getElementById('subject-distribution-list').innerHTML = '<p class="text-red-500">통계 로드 실패. 🔴</p>';
+            // 삭제 후 대시보드 데이터를 새로고침
+            fetchAndRenderCourses();
+            fetchAndRenderStats(
+              document.getElementById("period-selector").value
+            ); // 현재 필터 기준으로 통계 새로고침
+            fetchAndRenderDashboardData(); // Continue Watching도 새로고침
+          } else {
+            throw new Error(`삭제 실패: HTTP Status ${response.status}`);
+          }
+        } catch (error) {
+          console.error("삭제 중 오류 발생:", error);
+          alert(
+            `기록 삭제 중 오류가 발생했습니다. 서버 상태를 확인하세요. (${error.message})`
+          );
+        }
+      }
+
+      function setupDeleteButtons() {
+        const container = document.getElementById("course-list-container");
+
+        // 코스 목록 컨테이너에 이벤트 위임 (동적으로 생성되는 버튼에 이벤트 리스너를 붙이기 위함)
+        container.addEventListener("click", (event) => {
+          // 클릭된 요소 또는 그 부모 요소 중에서 'delete-button' 클래스를 찾습니다.
+          const button = event.target.closest(".delete-button");
+
+          if (button) {
+            const videoId = button.dataset.videoid;
+            const videoTitle = button.dataset.title;
+            if (videoId) {
+              deleteVideo(videoId, videoTitle);
             }
-        }
-        
-        // =========================================================
-        // 4. 사이드바 탐색 기능 (스크롤)
-        // =========================================================
+          }
+        });
+      }
 
-        function setupSidebarNavigation() {
-            const mainContent = document.querySelector('main > div:last-child'); // 스크롤이 발생하는 컨테이너
-            
-            // 1. 대시보드 버튼 (첫 번째 버튼)
-            const dashboardButton = document.querySelector('aside nav button:nth-child(1)');
-            dashboardButton.addEventListener('click', () => {
-                // 페이지 상단으로 이동
-                mainContent.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-            
-            // 2. 통계 버튼 (두 번째 버튼)
-            const statsButton = document.querySelector('aside nav button:nth-child(2)');
-            statsButton.addEventListener('click', () => {
-                // 스크롤 이동
-                document.getElementById('stats-section').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            });
-
-            // 3. 재생목록 버튼 (세 번째 버튼)
-            const coursesButton = document.querySelector('aside nav button:nth-child(3)');
-            coursesButton.addEventListener('click', () => {
-                // 스크롤 이동
-                document.getElementById('courses-section').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            });
-        }
-
-        function setupPeriodFiltering() {
-            const selector = document.getElementById('period-selector');
-            
-            // 드롭다운 변경 시 이벤트 리스너
-            selector.addEventListener('change', (event) => {
-                const selectedPeriod = event.target.value;
-                fetchAndRenderStats(selectedPeriod); // 선택된 기간으로 통계 API 재호출
-            });
-        }
-
-        // =========================================================
-        // 5. 기록 삭제 기능
-        // =========================================================
-
-        async function deleteVideo(videoId, videoTitle) {
-            if (!confirm(`'${videoTitle}' 영상의 모든 학습 기록을 삭제하시겠습니까?`)) {
-                return; // 사용자가 취소함
-            }
-            
-            const DELETE_API_URL = `http://localhost:8085/api/tracker/video/${videoId}`;
-            
-            try {
-                const response = await fetch(DELETE_API_URL, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.status === 204) {
-                    alert(`'${videoTitle}' 기록이 성공적으로 삭제되었습니다.`);
-                    
-                    // 삭제 후 대시보드 데이터를 새로고침
-                    fetchAndRenderCourses();
-                    fetchAndRenderStats(document.getElementById('period-selector').value); // 현재 필터 기준으로 통계 새로고침
-                    fetchAndRenderDashboardData(); // Continue Watching도 새로고침
-
-                } else {
-                    throw new Error(`삭제 실패: HTTP Status ${response.status}`);
-                }
-            } catch (error) {
-                console.error("삭제 중 오류 발생:", error);
-                alert(`기록 삭제 중 오류가 발생했습니다. 서버 상태를 확인하세요. (${error.message})`);
-            }
-        }
-
-        function setupDeleteButtons() {
-            const container = document.getElementById('course-list-container');
-            
-            // 코스 목록 컨테이너에 이벤트 위임 (동적으로 생성되는 버튼에 이벤트 리스너를 붙이기 위함)
-            container.addEventListener('click', (event) => {
-                // 클릭된 요소 또는 그 부모 요소 중에서 'delete-button' 클래스를 찾습니다.
-                const button = event.target.closest('.delete-button');
-                
-                if (button) {
-                    const videoId = button.dataset.videoid;
-                    const videoTitle = button.dataset.title;
-                    if (videoId) {
-                        deleteVideo(videoId, videoTitle);
-                    }
-                }
-            });
-        }
-
-
-        // 페이지 로드 시 모든 함수 실행
-        fetchAndRenderDashboardData();
-        fetchAndRenderCourses();
-        fetchAndRenderStats(); // 초기 로드 시 'all' (기본값)으로 호출
-        setupSidebarNavigation(); 
-        setupPeriodFiltering(); // 기간 필터링 설정 함수 호출
-        setupDeleteButtons(); // 삭제 버튼 이벤트 설정 함수 호출 추가
-        
+      // 페이지 로드 시 모든 함수 실행
+      fetchAndRenderDashboardData();
+      fetchAndRenderCourses();
+      fetchAndRenderStats(); // 초기 로드 시 'all' (기본값)으로 호출
+      setupSidebarNavigation();
+      setupPeriodFiltering(); // 기간 필터링 설정 함수 호출
+      setupDeleteButtons(); // 삭제 버튼 이벤트 설정 함수 호출 추가
     </script>
-</body>
+  </body>
 </html>

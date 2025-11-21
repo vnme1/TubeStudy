@@ -8,6 +8,7 @@ import com.tubestudy.tracker.dto.DashboardStatsDto;
 //import com.tubestudy.tracker.dto.DashboardStatsDto.SubjectStatDto;
 import com.tubestudy.tracker.entity.VideoProgress;
 import com.tubestudy.tracker.repository.VideoProgressRepository;
+import com.tubestudy.tracker.repository.SettingsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 public class TrackerService {
 
     private final VideoProgressRepository repository;
+    private final SettingsService settingsService;
 
     @Transactional
     public void saveOrUpdate(VideoProgressDto dto) {
@@ -222,10 +224,9 @@ public class TrackerService {
     // 통계 계산 API 로직
     // ********************************************
     @Transactional(readOnly = true)
-    public DashboardStatsDto getDashboardStats(String periodType) { // ✅ periodType 매개변수 추가
+    public DashboardStatsDto getDashboardStats(String periodType) {
 
         // 1. 조회 기간 결정
-        // periodType을 기반으로 시작 시간과 종료 시간을 계산합니다.
         LocalDateTime[] range = calculateTimeRange(periodType);
         LocalDateTime startDate = range[0];
         LocalDateTime endDate = range[1];
@@ -239,14 +240,16 @@ public class TrackerService {
             allVideos = repository.findAll();
         }
 
-        // 2. 총 학습 시간 계산 및 과목별 누적 시간 계산
+        // ✅ 2. 목표 시간 동적 조회
+        // SettingsService를 사용하여 DB에서 설정된 주간 목표 시간을 가져옵니다.
+        int weeklyGoalHours = settingsService.getSettings().getWeeklyGoalHours();
+
+        // 3. 총 학습 시간 계산 및 과목별 누적 시간 계산
         double totalStudySeconds = 0;
         Map<String, Double> subjectAccumulatedSeconds = new HashMap<>();
 
         for (VideoProgress video : allVideos) {
             // 여기서는 영상의 최종 진도(LastProgressSeconds)를 학습 시간으로 간주합니다.
-            // (주의: 실제로는 누적 학습 시간(StudyTimeSeconds)을 쓰는 것이 더 정확하나, 현재는 LastProgressSeconds로
-            // 통계 계산 중)
             double studyTimeForVideo = video.getLastProgressSeconds();
             totalStudySeconds += studyTimeForVideo;
 
@@ -257,7 +260,7 @@ public class TrackerService {
 
         final double finalTotalStudySeconds = totalStudySeconds;
 
-        // 3. 과목 분포 퍼센트 계산
+        // 4. 과목 분포 퍼센트 계산
         List<DashboardStatsDto.SubjectStatDto> subjectStats = subjectAccumulatedSeconds.entrySet().stream()
                 .map(entry -> {
                     String subjectName = entry.getKey();
@@ -275,15 +278,19 @@ public class TrackerService {
                 .sorted(Comparator.comparing(DashboardStatsDto.SubjectStatDto::getPercentage).reversed())
                 .collect(Collectors.toList());
 
-        // 4. 포맷팅 및 DTO 완성
+        // 5. 포맷팅 및 DTO 완성
         String formattedTime = formatTotalSeconds(totalStudySeconds);
+
+        // ✅ 주간 목표 시간(Hours)을 초(Seconds)로 변환
+        double totalGoalSeconds = (double) weeklyGoalHours * 3600;
 
         return DashboardStatsDto.builder()
                 .totalStudySeconds(totalStudySeconds)
                 .totalStudyTimeFormatted(formattedTime)
                 .totalStudyHours(totalStudySeconds / 3600.0)
                 .subjectStats(subjectStats)
-                .weekGoalPercentage(Math.min(100, (totalStudySeconds / (3600 * 20)) * 100))
+                // ✅ 동적으로 조회된 목표 시간을 사용하여 퍼센트 계산
+                .weekGoalPercentage(Math.min(100, (totalStudySeconds / totalGoalSeconds) * 100))
                 .build();
     }
 
@@ -369,7 +376,7 @@ public class TrackerService {
      * 
      * @param videoId 삭제할 영상의 ID
      */
-    @Transactional // ✅ 데이터 변경이 발생하므로 @Transactional 어노테이션 필수
+    @Transactional // 데이터 변경이 발생하므로 @Transactional 어노테이션 필수
     public void deleteVideoProgress(String videoId) {
         // Repository에서 videoId를 기준으로 모든 기록을 찾아 삭제합니다.
         repository.deleteByVideoId(videoId);

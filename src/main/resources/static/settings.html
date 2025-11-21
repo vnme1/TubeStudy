@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TubeStudy - 환경 설정</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap");
+
+      /* study.html과 동일한 스타일 적용 */
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #0f0f0f; /* YouTube Dark Background */
+        color: #f1f1f1;
+      }
+    </style>
+  </head>
+  <body class="h-screen flex overflow-hidden">
+    <aside
+      class="w-20 flex flex-col items-center py-6 bg-[#0f0f0f] border-r border-[#272727]"
+    >
+      <div class="mb-10 text-red-600 text-2xl">
+        <i class="fab fa-youtube"></i>
+      </div>
+
+      <nav class="space-y-8 flex flex-col items-center w-full">
+        <a href="study.html" class="text-white text-xl relative group">
+          <i class="fas fa-home"></i>
+          <span
+            class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50"
+            >대시보드</span
+          >
+        </a>
+        <a
+          href="study.html#stats-section"
+          class="text-white hover:text-red-500 transition text-xl relative group"
+        >
+          <i class="fas fa-chart-pie"></i>
+          <span
+            class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50"
+            >통계</span
+          >
+        </a>
+        <a
+          href="study.html#courses-section"
+          class="text-white hover:text-red-500 transition text-xl relative group"
+        >
+          <i class="fas fa-list"></i>
+          <span
+            class="absolute left-10 bg-gray-800 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-50"
+            >재생목록</span
+          >
+        </a>
+      </nav>
+
+      <div class="mt-auto">
+        <div
+          class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold"
+        >
+          U
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <header
+        class="h-16 flex items-center justify-between px-8 border-b border-[#272727]"
+      >
+        <h1 class="text-lg font-bold tracking-tight">⚙️ 환경 설정</h1>
+        <div class="flex items-center gap-4">
+          <div
+            class="flex items-center gap-2 bg-[#272727] px-3 py-1.5 rounded-full border border-[#3f3f3f]"
+          >
+            <span class="relative flex h-2 w-2">
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2 w-2 bg-red-500"
+              ></span>
+            </span>
+            <span class="text-xs font-medium text-gray-300"
+              >Extension Connected</span
+            >
+          </div>
+          <a href="study.html" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-home"></i>
+          </a>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-8">
+        <section class="mb-10 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
+            학습 목표 설정
+          </h2>
+
+          <div class="bg-[#1f1f1f] p-8 rounded-xl shadow-lg border border-[#272727]">
+            <form id="settings-form">
+              <div class="mb-6">
+                <label for="weekly-goal" class="block text-sm font-medium text-gray-300 mb-3">
+                  주간 학습 목표 (시간)
+                </label>
+                <input
+                  type="number"
+                  id="weekly-goal"
+                  name="weeklyGoalHours"
+                  min="1"
+                  max="168"
+                  required
+                  class="w-full p-3 bg-[#0f0f0f] border border-[#3f3f3f] rounded-lg text-lg text-white placeholder-gray-500 focus:border-red-600 focus:ring-red-600 outline-none"
+                  placeholder="예: 20"
+                />
+                <p class="mt-2 text-sm text-gray-500">
+                  일주일에 달성하고자 하는 총 학습 시간(Hours)을 입력하세요. (최대 168시간)
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition duration-200 focus:outline-none focus:ring-4 focus:ring-red-800"
+              >
+                목표 저장
+              </button>
+            </form>
+
+            <div id="message-area" class="mt-4 text-center text-sm" role="alert"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      // 포트 번호 18085를 사용합니다.
+      const SETTINGS_API_URL = 'http://localhost:18085/api/settings';
+
+      const goalInput = document.getElementById('weekly-goal');
+      const settingsForm = document.getElementById('settings-form');
+      const messageArea = document.getElementById('message-area');
+
+      // 메시지 표시 헬퍼 함수
+      function showMessage(text, isSuccess = true) {
+        messageArea.innerText = text;
+        messageArea.className = `mt-4 text-center text-sm font-medium ${isSuccess ? 'text-green-500' : 'text-red-500'}`;
+
+        setTimeout(() => {
+          messageArea.innerText = '';
+        }, 3000);
+      }
+
+      // =========================================================
+      // 1. 현재 설정 값 불러오기
+      // =========================================================
+      async function fetchCurrentSettings() {
+        try {
+          const response = await fetch(SETTINGS_API_URL);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const data = await response.json();
+
+          goalInput.value = data.weeklyGoalHours;
+        } catch (error) {
+          console.error("설정 데이터를 불러오는 중 오류 발생:", error);
+          showMessage("설정 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.", false);
+        }
+      }
+
+      // =========================================================
+      // 2. 설정 값 저장 (폼 제출)
+      // =========================================================
+      settingsForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const weeklyGoalHours = parseInt(goalInput.value, 10);
+
+        if (isNaN(weeklyGoalHours) || weeklyGoalHours < 1 || weeklyGoalHours > 168) {
+          showMessage("유효한 주간 목표 시간(1~168)을 입력해주세요.", false);
+          return;
+        }
+
+        try {
+          const response = await fetch(SETTINGS_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ weeklyGoalHours: weeklyGoalHours })
+          });
+
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const updatedData = await response.json();
+
+          showMessage(`목표가 성공적으로 저장되었습니다: ${updatedData.weeklyGoalHours}시간`, true);
+        } catch (error) {
+          console.error("설정 저장 중 오류 발생:", error);
+          showMessage("목표 저장 중 오류가 발생했습니다. 서버 상태를 확인하세요.", false);
+        }
+      });
+
+      // =========================================================
+      // 3. 페이지 로드 시 호출
+      // =========================================================
+      fetchCurrentSettings();
+    </script>
+  </body>
+</html>
