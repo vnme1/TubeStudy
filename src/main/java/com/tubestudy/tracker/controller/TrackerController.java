@@ -73,21 +73,21 @@ public class TrackerController {
     // CSV 내보내기 API
     // ********************************************
     /**
-     * 모든 학습 기록을 CSV 파일로 내보냅니다.
+     * 모든 학습 기록을 CSV 파일로 내보냅니다 (UTF-8 BOM 포함).
      * 
      * @return CSV 파일 다운로드
      */
     @GetMapping("/export/csv")
-    public ResponseEntity<String> exportCsv() {
+    public ResponseEntity<byte[]> exportCsv() {
         try {
-            String csvContent = csvExportService.exportStudyRecordsAsCsv();
+            byte[] csvBytes = csvExportService.exportStudyRecordsAsCsv();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             headers.setContentDispositionFormData("attachment", "study_records.csv");
-            headers.add("Content-Encoding", "UTF-8");
+            headers.setContentLength(csvBytes.length);
 
-            return new ResponseEntity<>(csvContent, headers, HttpStatus.OK);
+            return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
         } catch (IOException e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

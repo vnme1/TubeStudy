@@ -17,10 +17,10 @@ public class CsvExportService {
     private final VideoProgressRepository videoProgressRepository;
 
     /**
-     * 모든 학습 기록을 CSV 형식으로 내보냅니다.
+     * 모든 학습 기록을 CSV 형식으로 내보냅니다 (UTF-8 BOM 포함).
      */
     @Transactional(readOnly = true)
-    public String exportStudyRecordsAsCsv() throws IOException {
+    public byte[] exportStudyRecordsAsCsv() throws IOException {
         List<VideoProgress> records = videoProgressRepository.findAll();
 
         StringWriter stringWriter = new StringWriter();
@@ -42,7 +42,15 @@ public class CsvExportService {
                     .append("\n");
         }
 
-        return stringWriter.toString();
+        // UTF-8 BOM + CSV 내용
+        String csvContent = stringWriter.toString();
+        byte[] utf8Bom = new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+        byte[] csvBytes = csvContent.getBytes("UTF-8");
+        byte[] result = new byte[utf8Bom.length + csvBytes.length];
+        System.arraycopy(utf8Bom, 0, result, 0, utf8Bom.length);
+        System.arraycopy(csvBytes, 0, result, utf8Bom.length, csvBytes.length);
+
+        return result;
     }
 
     /**
