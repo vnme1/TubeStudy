@@ -18,6 +18,269 @@
         background-color: #0f0f0f; /* YouTube Dark Background */
         color: #f1f1f1;
       }
+
+      /* ===== 페이드인 애니메이션 ===== */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ===== 슬라이드인 애니메이션 ===== */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* ===== 카드 호버 효과 ===== */
+      @keyframes cardHover {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-4px);
+        }
+      }
+
+      /* ===== 펄스 애니메이션 ===== */
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* ===== 회전 애니메이션 ===== */
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ===== 섹션 카드에 페이드인 효과 ===== */
+      section {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      /* ===== 사이드바 네비게이션 호버 효과 ===== */
+      aside nav a,
+      aside nav button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      aside nav a:hover,
+      aside nav button:hover {
+        transform: scale(1.1);
+        color: #ef4444;
+        text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      }
+
+      /* ===== 입력 필드 포커스 효과 ===== */
+      input:focus,
+      textarea:focus {
+        animation: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      }
+
+      /* ===== 버튼 호버 효과 ===== */
+      button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      button:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      /* ===== 카드 호버 효과 ===== */
+      .bg-\[\#1f1f1f\] {
+        transition: all 0.3s ease-out;
+      }
+
+      .bg-\[\#1f1f1f\]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.1);
+        border-color: #3f3f3f;
+      }
+
+      /* ===== 토글 스위치 애니메이션 ===== */
+      .peer {
+        transition: all 0.3s ease-out;
+      }
+
+      .peer-checked\:bg-red-600 {
+        transition: background-color 0.3s ease-out;
+      }
+
+      /* ===== 로딩 스피너 ===== */
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+
+      /* ===== 메시지 토스트 애니메이션 ===== */
+      #message-area {
+        animation: slideIn 0.3s ease-out;
+      }
+
+      /* ===== 라이트 모드 CSS ===== */
+      body.light-mode {
+        background-color: #ffffff;
+        color: #1a1a1a;
+      }
+
+      body.light-mode aside {
+        background-color: #f5f5f5;
+        border-right-color: #e0e0e0;
+      }
+
+      body.light-mode header {
+        background-color: #ffffff;
+        border-bottom-color: #e0e0e0;
+      }
+
+      body.light-mode main {
+        background-color: #f9f9f9;
+      }
+
+      body.light-mode section {
+        background-color: #ffffff;
+      }
+
+      body.light-mode .bg-\[\#1f1f1f\] {
+        background-color: #f5f5f5 !important;
+        color: #1a1a1a;
+        border-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .bg-\[\#0f0f0f\] {
+        background-color: #ffffff !important;
+        color: #1a1a1a;
+        border-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .bg-\[\#272727\] {
+        background-color: #e8e8e8 !important;
+        color: #1a1a1a;
+      }
+
+      body.light-mode .bg-\[\#3f3f3f\] {
+        background-color: #d0d0d0 !important;
+      }
+
+      body.light-mode .text-gray-300 {
+        color: #666666 !important;
+      }
+
+      body.light-mode .text-gray-400 {
+        color: #888888 !important;
+      }
+
+      body.light-mode .text-gray-500 {
+        color: #999999 !important;
+      }
+
+      body.light-mode .text-white {
+        color: #1a1a1a !important;
+      }
+
+      body.light-mode .border-\[\#272727\] {
+        border-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .border-\[\#3f3f3f\] {
+        border-color: #d0d0d0 !important;
+      }
+
+      body.light-mode input,
+      body.light-mode textarea {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+        border-color: #d0d0d0 !important;
+      }
+
+      body.light-mode input::placeholder,
+      body.light-mode textarea::placeholder {
+        color: #999999 !important;
+      }
+
+      body.light-mode input:focus,
+      body.light-mode textarea:focus {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+      }
+
+      body.light-mode button {
+        color: #ffffff;
+      }
+
+      body.light-mode .group:hover {
+        background-color: #f0f0f0;
+      }
+
+      body.light-mode nav a:hover,
+      body.light-mode nav button:hover {
+        color: #ef4444;
+      }
+
+      body.light-mode ::-webkit-scrollbar-thumb {
+        background: #d0d0d0;
+      }
+
+      body.light-mode h1,
+      body.light-mode h2,
+      body.light-mode h3,
+      body.light-mode h4,
+      body.light-mode h5,
+      body.light-mode h6 {
+        color: #1a1a1a !important;
+      }
+
+      body.light-mode .text-red-600 {
+        color: #dc2626 !important;
+      }
+
+      body.light-mode .text-red-500 {
+        color: #ef4444 !important;
+      }
+
+      body.light-mode .bg-red-600,
+      body.light-mode .bg-red-700,
+      body.light-mode .bg-blue-600,
+      body.light-mode .bg-blue-700,
+      body.light-mode .bg-gray-700,
+      body.light-mode .bg-gray-600 {
+        filter: none;
+      }
+
+      body.light-mode .shadow-lg {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      /* 라이트 모드 카드 호버 효과 */
+      body.light-mode .bg-\[\#1f1f1f\]:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        background-color: #efefef !important;
+      }
     </style>
   </head>
   <body class="h-screen flex overflow-hidden">
@@ -286,6 +549,71 @@
                 <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
               </label>
             </div>
+
+            <!-- 음성 알림 활성화 -->
+            <div class="flex items-center justify-between pt-4 border-t border-[#3f3f3f]">
+              <div>
+                <h3 class="text-white font-semibold">🔊 음성 알림</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  알림 시 음성 안내를 재생합니다.
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="voice-notification"
+                  class="sr-only peer"
+                />
+                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <!-- UI/UX 개선 설정 -->
+        <section class="mb-10 max-w-2xl">
+          <h2 class="text-2xl font-bold mb-6 border-b border-[#272727] pb-2">
+            ✨ UI/UX 개선
+          </h2>
+
+          <div class="bg-[#1f1f1f] p-8 rounded-xl shadow-lg border border-[#272727] space-y-6">
+            <!-- 다크 모드 토글 -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-white font-semibold">🌙 다크 모드</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  눈에 편한 다크 테마를 사용합니다.
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="dark-mode-toggle"
+                  class="sr-only peer"
+                  checked
+                />
+                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              </label>
+            </div>
+
+            <!-- 애니메이션 토글 -->
+            <div class="flex items-center justify-between pt-4 border-t border-[#3f3f3f]">
+              <div>
+                <h3 class="text-white font-semibold">✨ 애니메이션</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                  부드러운 전환 효과와 애니메이션을 활성화합니다.
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="animation-toggle"
+                  class="sr-only peer"
+                  checked
+                />
+                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+              </label>
+            </div>
           </div>
         </section>
 
@@ -406,6 +734,11 @@
       const keywordInput = document.getElementById('keyword-input');
       const categoryInput = document.getElementById('category-input');
       const alertMessageInput = document.getElementById('alert-message-input');
+      
+      // UI/UX 개선 설정
+      const darkModeToggle = document.getElementById('dark-mode-toggle');
+      const voiceNotificationToggle = document.getElementById('voice-notification');
+      const animationToggle = document.getElementById('animation-toggle');
 
       // 메시지 표시 헬퍼 함수
       function showMessage(text, isSuccess = true) {
@@ -439,9 +772,21 @@
           distractionAlert.checked = data.distractionAlertEnabled !== false;
           achievementAlert.checked = data.achievementAlertEnabled !== false;
 
+          // UI/UX 개선 설정 불러오기
+          darkModeToggle.checked = data.darkModeEnabled !== false;
+          voiceNotificationToggle.checked = data.voiceNotificationEnabled !== false;
+          animationToggle.checked = data.animationEnabled !== false;
+
           // 로컬 스토리지에도 동기화
           localStorage.setItem('distractionAlert', JSON.stringify(distractionAlert.checked));
           localStorage.setItem('achievementAlert', JSON.stringify(achievementAlert.checked));
+          localStorage.setItem('darkModeEnabled', JSON.stringify(darkModeToggle.checked));
+          localStorage.setItem('voiceNotificationEnabled', JSON.stringify(voiceNotificationToggle.checked));
+          localStorage.setItem('animationEnabled', JSON.stringify(animationToggle.checked));
+
+          // 다크 모드 적용
+          applyDarkMode(darkModeToggle.checked);
+          applyAnimationSettings(animationToggle.checked);
         } catch (error) {
           console.error("설정 데이터를 불러오는 중 오류 발생:", error);
           showMessage("설정 데이터를 불러오지 못했습니다. 서버 상태를 확인하세요.", false);
@@ -490,7 +835,14 @@
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ weeklyGoalHours: weeklyGoalHours })
+            body: JSON.stringify({ 
+              weeklyGoalHours: weeklyGoalHours,
+              distractionAlertEnabled: distractionAlert.checked,
+              achievementAlertEnabled: achievementAlert.checked,
+              darkModeEnabled: darkModeToggle.checked,
+              voiceNotificationEnabled: voiceNotificationToggle.checked,
+              animationEnabled: animationToggle.checked
+            })
           });
 
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -676,7 +1028,10 @@
         // 1. 토스트 메시지 표시 (UI에 항상 표시)
         showMessage(message, true);
 
-        // 2. Browser Notification API (권한이 있으면 표시)
+        // 2. 음성 알림 재생
+        playVoiceNotification(message);
+
+        // 3. Browser Notification API (권한이 있으면 표시)
         if ('Notification' in window && Notification.permission === 'granted') {
           const options = {
             icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/fire.svg',
@@ -961,6 +1316,158 @@
           showMessage('❌ 삭제 중 오류가 발생했습니다.', false);
         }
       }
+
+      // =========================================================
+      // UI/UX 개선: 다크 모드, 음성 알림, 애니메이션
+      // =========================================================
+
+      /**
+       * 다크 모드 적용 함수
+       */
+      function applyDarkMode(isDarkMode) {
+        const html = document.documentElement;
+        const body = document.body;
+        
+        if (isDarkMode) {
+          html.style.colorScheme = 'dark';
+          body.classList.remove('light-mode');
+          body.style.backgroundColor = '#0f0f0f';
+          body.style.color = '#f1f1f1';
+        } else {
+          html.style.colorScheme = 'light';
+          body.classList.add('light-mode');
+          body.style.backgroundColor = '#ffffff';
+          body.style.color = '#1a1a1a';
+        }
+      }
+
+      /**
+       * 애니메이션 설정 적용 함수
+       */
+      function applyAnimationSettings(isEnabled) {
+        const style = document.getElementById('animation-style') || document.createElement('style');
+        style.id = 'animation-style';
+        
+        if (!isEnabled) {
+          style.textContent = `
+            * {
+              animation-duration: 0s !important;
+              transition-duration: 0s !important;
+            }
+          `;
+        } else {
+          style.textContent = ''; // 기본 애니메이션 복원
+        }
+        
+        if (!document.getElementById('animation-style')) {
+          document.head.appendChild(style);
+        }
+      }
+
+      /**
+       * 음성 알림 재생 함수
+       */
+      function playVoiceNotification(message) {
+        if (!voiceNotificationToggle.checked) return;
+
+        // Web Speech API 사용
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(message);
+          utterance.lang = 'ko-KR';
+          utterance.rate = 1.2;
+          utterance.pitch = 1;
+          speechSynthesis.speak(utterance);
+        }
+      }
+
+      // 다크 모드 토글 이벤트
+      darkModeToggle.addEventListener('change', async function() {
+        const isChecked = this.checked;
+        localStorage.setItem('darkModeEnabled', JSON.stringify(isChecked));
+        applyDarkMode(isChecked);
+
+        // 백엔드에 저장
+        try {
+          await fetch(SETTINGS_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              weeklyGoalHours: parseInt(goalInput.value, 10),
+              distractionAlertEnabled: distractionAlert.checked,
+              achievementAlertEnabled: achievementAlert.checked,
+              darkModeEnabled: isChecked,
+              voiceNotificationEnabled: voiceNotificationToggle.checked,
+              animationEnabled: animationToggle.checked
+            })
+          });
+          showMessage(`✅ 다크 모드 ${isChecked ? '활성화' : '비활성화'}되었습니다.`, true);
+          playVoiceNotification(`다크 모드 ${isChecked ? '활성화' : '비활성화'}`);
+        } catch (error) {
+          console.error("다크 모드 설정 저장 실패:", error);
+          this.checked = !isChecked;
+        }
+      });
+
+      // 음성 알림 토글 이벤트
+      voiceNotificationToggle.addEventListener('change', async function() {
+        const isChecked = this.checked;
+        localStorage.setItem('voiceNotificationEnabled', JSON.stringify(isChecked));
+
+        // 백엔드에 저장
+        try {
+          await fetch(SETTINGS_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              weeklyGoalHours: parseInt(goalInput.value, 10),
+              distractionAlertEnabled: distractionAlert.checked,
+              achievementAlertEnabled: achievementAlert.checked,
+              darkModeEnabled: darkModeToggle.checked,
+              voiceNotificationEnabled: isChecked,
+              animationEnabled: animationToggle.checked
+            })
+          });
+          showMessage(`✅ 음성 알림 ${isChecked ? '활성화' : '비활성화'}되었습니다.`, true);
+          playVoiceNotification(`음성 알림 ${isChecked ? '활성화' : '비활성화'}`);
+        } catch (error) {
+          console.error("음성 알림 설정 저장 실패:", error);
+          this.checked = !isChecked;
+        }
+      });
+
+      // 애니메이션 토글 이벤트
+      animationToggle.addEventListener('change', async function() {
+        const isChecked = this.checked;
+        localStorage.setItem('animationEnabled', JSON.stringify(isChecked));
+        applyAnimationSettings(isChecked);
+
+        // 백엔드에 저장
+        try {
+          await fetch(SETTINGS_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              weeklyGoalHours: parseInt(goalInput.value, 10),
+              distractionAlertEnabled: distractionAlert.checked,
+              achievementAlertEnabled: achievementAlert.checked,
+              darkModeEnabled: darkModeToggle.checked,
+              voiceNotificationEnabled: voiceNotificationToggle.checked,
+              animationEnabled: isChecked
+            })
+          });
+          showMessage(`✅ 애니메이션 ${isChecked ? '활성화' : '비활성화'}되었습니다.`, true);
+          playVoiceNotification(`애니메이션 ${isChecked ? '활성화' : '비활성화'}`);
+        } catch (error) {
+          console.error("애니메이션 설정 저장 실패:", error);
+          this.checked = !isChecked;
+        }
+      });
 
       // 페이지 로드 시 키워드 목록 불러오기
       loadKeywords();

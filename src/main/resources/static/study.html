@@ -41,6 +41,273 @@
       .thumbnail-card {
         aspect-ratio: 16/9;
       }
+
+      /* ===== 페이드인 애니메이션 ===== */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ===== 슬라이드인 애니메이션 ===== */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* ===== 카드 호버 효과 ===== */
+      @keyframes cardHover {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(-4px);
+        }
+      }
+
+      /* ===== 펄스 애니메이션 ===== */
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* ===== 회전 애니메이션 ===== */
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ===== 섹션에 페이드인 효과 ===== */
+      section {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      /* ===== 사이드바 네비게이션 호버 효과 ===== */
+      aside nav button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      aside nav button:hover {
+        transform: scale(1.1);
+        color: #ef4444;
+        text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      }
+
+      /* ===== 입력 필드 포커스 효과 ===== */
+      input:focus,
+      textarea:focus {
+        animation: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      }
+
+      /* ===== 버튼 호버 효과 ===== */
+      button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      }
+
+      button:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      /* ===== 카드 호버 효과 ===== */
+      .group {
+        transition: all 0.3s ease-out;
+      }
+
+      .group:hover {
+        transform: translateY(-2px);
+      }
+
+      /* ===== 로딩 애니메이션 ===== */
+      .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* ===== 연속 진행바 애니메이션 ===== */
+      .progress-bar-fill {
+        transition: width 0.3s ease-out;
+      }
+
+      /* ===== 스트릭 배지 글로우 효과 ===== */
+      #streak-badge {
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      /* ===== 라이트 모드 CSS ===== */
+      body.light-mode {
+        background-color: #ffffff;
+        color: #1a1a1a;
+      }
+
+      body.light-mode aside {
+        background-color: #f5f5f5;
+        border-right-color: #e0e0e0;
+      }
+
+      body.light-mode header {
+        background-color: #ffffff;
+        border-bottom-color: #e0e0e0;
+      }
+
+      body.light-mode main {
+        background-color: #f9f9f9;
+      }
+
+      body.light-mode section {
+        background-color: #ffffff;
+      }
+
+      body.light-mode .bg-\[\#1f1f1f\] {
+        background-color: #f5f5f5 !important;
+        color: #1a1a1a;
+        border-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .bg-\[\#0f0f0f\] {
+        background-color: #ffffff !important;
+        color: #1a1a1a;
+        border-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .bg-\[\#272727\] {
+        background-color: #e8e8e8 !important;
+        color: #1a1a1a;
+      }
+
+      body.light-mode .bg-\[\#3f3f3f\] {
+        background-color: #d0d0d0 !important;
+      }
+
+      body.light-mode .text-gray-300 {
+        color: #666666 !important;
+      }
+
+      body.light-mode .text-gray-400 {
+        color: #888888 !important;
+      }
+
+      body.light-mode .text-gray-500 {
+        color: #999999 !important;
+      }
+
+      body.light-mode .text-white {
+        color: #1a1a1a !important;
+      }
+
+      body.light-mode .border-\[\#272727\] {
+        border-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .border-\[\#3f3f3f\] {
+        border-color: #d0d0d0 !important;
+      }
+
+      body.light-mode input,
+      body.light-mode textarea {
+        background-color: #ffffff !important;
+        color: #1a1a1a !important;
+        border-color: #d0d0d0 !important;
+      }
+
+      body.light-mode input::placeholder,
+      body.light-mode textarea::placeholder {
+        color: #999999 !important;
+      }
+
+      body.light-mode input:focus,
+      body.light-mode textarea:focus {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+      }
+
+      body.light-mode button {
+        color: #ffffff;
+      }
+
+      body.light-mode .group:hover {
+        background-color: #f0f0f0;
+      }
+
+      body.light-mode nav a:hover,
+      body.light-mode nav button:hover {
+        color: #ef4444;
+      }
+
+      body.light-mode ::-webkit-scrollbar-thumb {
+        background: #d0d0d0;
+      }
+
+      body.light-mode h1,
+      body.light-mode h2,
+      body.light-mode h3,
+      body.light-mode h4,
+      body.light-mode h5,
+      body.light-mode h6 {
+        color: #1a1a1a !important;
+      }
+
+      body.light-mode .text-red-600 {
+        color: #dc2626 !important;
+      }
+
+      body.light-mode .text-red-500 {
+        color: #ef4444 !important;
+      }
+
+      body.light-mode .bg-red-600,
+      body.light-mode .bg-red-700,
+      body.light-mode .bg-blue-600,
+      body.light-mode .bg-blue-700,
+      body.light-mode .bg-gray-700,
+      body.light-mode .bg-gray-600 {
+        filter: none;
+      }
+
+      body.light-mode .shadow-lg {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      /* 라이트 모드 카드 호버 효과 */
+      body.light-mode .bg-\[\#1f1f1f\]:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        background-color: #efefef !important;
+      }
+
+      body.light-mode .progress-bar-bg {
+        background-color: #e0e0e0 !important;
+      }
+
+      body.light-mode .progress-bar-fill {
+        background-color: #cc0000;
+      }
+
+      body.light-mode .thumbnail-card {
+        filter: brightness(0.9);
+      }
     </style>
   </head>
   <body class="h-screen flex overflow-hidden">
@@ -649,6 +916,9 @@
       // 스트릭 알림 (Browser Notification API)
       // =========================================================
       function showStreakNotificationBrowser(message, type) {
+        // 음성 알림 재생
+        playVoiceNotificationStudy(message);
+
         if ('Notification' in window && Notification.permission === 'granted') {
           const options = {
             icon: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/svgs/solid/fire.svg',
@@ -677,6 +947,83 @@
         }
       }
 
+      // =========================================================
+      // UI/UX 개선: 다크 모드, 애니메이션, 음성 알림
+      // =========================================================
+
+      /**
+       * 다크 모드 적용 함수
+       */
+      function applyDarkModeStudy(isDarkMode) {
+        const html = document.documentElement;
+        const body = document.body;
+        
+        if (isDarkMode) {
+          html.style.colorScheme = 'dark';
+          body.classList.remove('light-mode');
+          body.style.backgroundColor = '#0f0f0f';
+          body.style.color = '#f1f1f1';
+        } else {
+          html.style.colorScheme = 'light';
+          body.classList.add('light-mode');
+          body.style.backgroundColor = '#ffffff';
+          body.style.color = '#1a1a1a';
+        }
+      }
+
+      /**
+       * 애니메이션 설정 적용 함수
+       */
+      function applyAnimationSettingsStudy(isEnabled) {
+        const style = document.getElementById('animation-style') || document.createElement('style');
+        style.id = 'animation-style';
+        
+        if (!isEnabled) {
+          style.textContent = `
+            * {
+              animation-duration: 0s !important;
+              transition-duration: 0s !important;
+            }
+          `;
+        } else {
+          style.textContent = '';
+        }
+        
+        if (!document.getElementById('animation-style')) {
+          document.head.appendChild(style);
+        }
+      }
+
+      /**
+       * localStorage에서 UI/UX 설정 가져오기
+       */
+      function loadUISettings() {
+        const darkModeEnabled = JSON.parse(localStorage.getItem('darkModeEnabled') ?? 'true');
+        const animationEnabled = JSON.parse(localStorage.getItem('animationEnabled') ?? 'true');
+        
+        applyDarkModeStudy(darkModeEnabled);
+        applyAnimationSettingsStudy(animationEnabled);
+      }
+
+      /**
+       * 음성 알림 재생 함수
+       */
+      function playVoiceNotificationStudy(message) {
+        const voiceNotificationEnabled = JSON.parse(localStorage.getItem('voiceNotificationEnabled') ?? 'false');
+        if (!voiceNotificationEnabled) return;
+
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(message);
+          utterance.lang = 'ko-KR';
+          utterance.rate = 1.2;
+          utterance.pitch = 1;
+          speechSynthesis.speak(utterance);
+        }
+      }
+
+      // 페이지 로드 시 UI 설정 적용
+      loadUISettings();
+
       // 페이지 로드 시 모든 함수 실행
       fetchAndRenderDashboardData();
       fetchAndRenderCourses();
@@ -688,6 +1035,13 @@
 
       // 30초마다 스트릭 배지 업데이트 (자동 동기화)
       setInterval(updateStreakBadge, 30000);
+
+      // localStorage 변경 감지 (다른 탭에서 UI 설정 변경 시)
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'darkModeEnabled' || event.key === 'animationEnabled') {
+          loadUISettings();
+        }
+      });
     </script>
   </body>
 </html>

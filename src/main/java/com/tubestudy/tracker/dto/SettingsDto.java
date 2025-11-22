@@ -13,4 +13,7 @@ public class SettingsDto {
     private int weeklyGoalHours;
     private boolean distractionAlertEnabled;
     private boolean achievementAlertEnabled;
+    private boolean darkModeEnabled;
+    private boolean voiceNotificationEnabled;
+    private boolean animationEnabled;
 }

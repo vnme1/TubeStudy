@@ -131,7 +131,7 @@ async function sendDataToServer() {
     }
 }
 
-// 3. 경고 메시지를 유튜브 페이지에 직접 삽입하는 함수
+// 3. 경고 메시지를 유튜브 페이지에 직접 삽입하는 함수 + 음성 알림
 function showDistractionAlert(message) {
   // 1. 기존 알림이 있다면 제거
   let existingAlert = document.getElementById("tubestudy-alert");
@@ -166,12 +166,30 @@ function showDistractionAlert(message) {
   // 4. 페이지에 추가
   document.body.appendChild(alertDiv);
 
-  // 5. 8초 후 자동으로 사라지도록 설정
+  // 5. 음성 알림 재생
+  playVoiceAlert(`집중 경고! ${message}`);
+
+  // 6. 8초 후 자동으로 사라지도록 설정
   setTimeout(() => {
     if (document.getElementById("tubestudy-alert")) {
       document.getElementById("tubestudy-alert").remove();
     }
   }, 8000);
+}
+
+/**
+ * 음성 알림 재생 함수
+ * @param {string} message - 읽어줄 메시지
+ */
+function playVoiceAlert(message) {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 1.2;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    speechSynthesis.speak(utterance);
+  }
 }
 
 // 4. 5초마다 데이터 전송 로직 실행

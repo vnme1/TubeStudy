@@ -26,6 +26,9 @@ public class SettingsService {
                     .weeklyGoalHours(DEFAULT_GOAL_HOURS)
                     .distractionAlertEnabled(true)
                     .achievementAlertEnabled(true)
+                    .darkModeEnabled(true)
+                    .voiceNotificationEnabled(false)
+                    .animationEnabled(true)
                     .build();
             return settingsRepository.save(newSettings);
         });
@@ -34,6 +37,9 @@ public class SettingsService {
                 .weeklyGoalHours(settings.getWeeklyGoalHours())
                 .distractionAlertEnabled(settings.isDistractionAlertEnabled())
                 .achievementAlertEnabled(settings.isAchievementAlertEnabled())
+                .darkModeEnabled(settings.isDarkModeEnabled())
+                .voiceNotificationEnabled(settings.isVoiceNotificationEnabled())
+                .animationEnabled(settings.isAnimationEnabled())
                 .build();
     }
 
@@ -48,6 +54,9 @@ public class SettingsService {
                     .weeklyGoalHours(DEFAULT_GOAL_HOURS)
                     .distractionAlertEnabled(true)
                     .achievementAlertEnabled(true)
+                    .darkModeEnabled(true)
+                    .voiceNotificationEnabled(false)
+                    .animationEnabled(true)
                     .build();
         });
 
@@ -58,12 +67,20 @@ public class SettingsService {
         settings.setDistractionAlertEnabled(dto.isDistractionAlertEnabled());
         settings.setAchievementAlertEnabled(dto.isAchievementAlertEnabled());
 
+        // UI/UX 개선 설정 업데이트
+        settings.setDarkModeEnabled(dto.isDarkModeEnabled());
+        settings.setVoiceNotificationEnabled(dto.isVoiceNotificationEnabled());
+        settings.setAnimationEnabled(dto.isAnimationEnabled());
+
         Settings updatedSettings = settingsRepository.save(settings);
 
         return SettingsDto.builder()
                 .weeklyGoalHours(updatedSettings.getWeeklyGoalHours())
                 .distractionAlertEnabled(updatedSettings.isDistractionAlertEnabled())
                 .achievementAlertEnabled(updatedSettings.isAchievementAlertEnabled())
+                .darkModeEnabled(updatedSettings.isDarkModeEnabled())
+                .voiceNotificationEnabled(updatedSettings.isVoiceNotificationEnabled())
+                .animationEnabled(updatedSettings.isAnimationEnabled())
                 .build();
     }
 }

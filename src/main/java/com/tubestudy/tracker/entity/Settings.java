@@ -30,13 +30,29 @@ public class Settings {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private boolean achievementAlertEnabled = true;
 
+    // UI/UX 개선: 다크 모드 활성화 여부 (기본값: true)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
+    private boolean darkModeEnabled = true;
+
+    // UI/UX 개선: 음성 알림 활성화 여부 (기본값: false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT false")
+    private boolean voiceNotificationEnabled = false;
+
+    // UI/UX 개선: 애니메이션 활성화 여부 (기본값: true)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
+    private boolean animationEnabled = true;
+
     @Builder
-    public Settings(int weeklyGoalHours, boolean distractionAlertEnabled, boolean achievementAlertEnabled) {
+    public Settings(int weeklyGoalHours, boolean distractionAlertEnabled, boolean achievementAlertEnabled,
+            boolean darkModeEnabled, boolean voiceNotificationEnabled, boolean animationEnabled) {
         // ID는 항상 1로 고정하여 DB에 하나의 설정 레코드만 유지되도록 합니다.
         this.id = 1L;
         this.weeklyGoalHours = weeklyGoalHours;
         this.distractionAlertEnabled = distractionAlertEnabled;
         this.achievementAlertEnabled = achievementAlertEnabled;
+        this.darkModeEnabled = darkModeEnabled;
+        this.voiceNotificationEnabled = voiceNotificationEnabled;
+        this.animationEnabled = animationEnabled;
     }
 
     // 목표 시간을 변경하는 메서드
